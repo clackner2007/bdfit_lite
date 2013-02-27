@@ -11,26 +11,39 @@
 ;____________________________________
 
 
-FUNCTION get_imivarpsf, id, ra, dec, rootpath
+FUNCTION get_imivarpsf, id, name, rootpath
 
-idpath = string(id, ra, dec, format='(i0,".0_",d10.6,"_",d8.6)')
 
-if file_test(rootpath+'images/'+idpath+'_processed.fits.gz') eq 0 then begin
-    print, "couldn't find file "+rootpath+"images/"+idpath+'_processed.fits.gz'
-    return, {image:0.0, ivar:0.0, psf:0.0}
+if file_test(rootpath+'images/'+name+'.fits') eq 0 then begin
+    print, "couldn't find file "+rootpath+"images/"+name+'.fits'
+    return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
+ endif
+
+if file_test(rootpath+'ivar/'+name+'.wht.fits') eq 0 then begin
+    print, "couldn't find file "+rootpath+"ivar/"+name+'.wht.fits'
+    return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
+ endif
+
+if file_test(rootpath+'masks/'+$
+             string(id, format='(i0)')+'_mask.fits') eq 0 then begin
+    print, "couldn't find file "+$
+           rootpath+string(id, format='(i0)')+'_mask.fits for '+name
+    return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
 endif
-im = mrdfits(rootpath+'images/'+idpath+'_processed.fits.gz',0)
-ivarMask = mrdfits(rootpath+'ivar/'+idpath+'.wht.mask.fits',0)
-ivar0 = mrdfits(rootpath+'ivar2/'+idpath+'.wht.fits',0)
+im = mrdfits(rootpath+'images/'+name+'.fits', 0)
+ivar0 = mrdfits(rootpath+'ivar/'+name+'.wht.fits',0)
+ivarMask = mrdfits(rootpath+'masks/'+string(id, format='(i0)')+'_mask.fits', 0)
+mymask = mrdfits(rootpath+"masks/"+string(id, format='(i0)')+'_seg.fits', 0)
 
 ;temporarily change psf to random psf from list:
 ;idpath = string(14292, 149.543219D, 2.152322D, $
 ;                format='(i0,".0_",d10.6,"_",d8.6)')
 ;print, rootpath+'psf/'+idpath+'.psf.fits.gz'
 ;locpsf = mrdfits(rootpath+'psf/'+idpath+'.psf_est_red_halo.fits',0)
-locpsf = mrdfits(rootpath+'psf/'+idpath+'.psf.fits.gz',0)
-mask = ivarMask
-mask[where(mask ne 0)] /= mask[where(mask ne 0)]
+locpsf = mrdfits(rootpath+'psf/PSF_small.fits',0)
+mask = mymask
+mask[where(mymask ne 1)] = 0
+
 
 ;ivarMask[where(ivarMask gt 0)] = 1
 ;ivarMask=smooth(ivarMask,50)
@@ -46,9 +59,11 @@ mask[where(mask ne 0)] /= mask[where(mask ne 0)]
 ivar = ivar0
 flip = where(ivar0 ne 0)
 ivar[flip] = 1./(1./ivar0[flip] + im[flip]/2028.0)
+ivar[where(ivarMask eq 1)] = 0.0
 
 ;mask negative flux, these are noise dominated pixels
 nulls=where(ivar lt 0.0,n_nulls)
+print, n_nulls
 if n_nulls gt 0 then $
   ivar[nulls] *= 0.0
 

@@ -109,26 +109,21 @@ struct_assign, gals, output
 ;loop over each image
 for i=0L, n_elements(gals)-1L do begin
 
-    print, gals[i].GALID, ': ', i+1, ' of ', n_elements(gals)
+    print, gals[i].IDENT, ': ', i+1, ' of ', n_elements(gals)
     t1=systime(1)
-         
-
-    ;data = get_imivarpsffake(gals[i].GALID, gals[i].ALPHA_J2000, $
-    ;                         gals[i].DELTA_J2000, imagedir, $
-    ;                         gals[i].ISNR_IN )
-    data = get_imivarpsf(gals[i].GALID, gals[i].ALPHA_J2000, $
-                         gals[i].DELTA_J2000, imagedir)
+        
+    data = get_imivarpsf(gals[i].IDENT, strtrim(gals[i].FILENAME), imagedir)
 
     origsize = size(data.image, /dimensions )
     if n_elements(origsize) eq 1 then continue
     xcrop = 0
     ycrop = 0
     origdata=data
-    data = cropimage(data.image, data.ivar, data.psf, $
-                     data.mask, $
-                     x0=xcrop, y0=ycrop)
-    ;x0 = 0
-    ;y0 = 0
+    ;data = cropimage(data.image, data.ivar, data.psf, $
+    ;                 data.mask, $
+    ;                 x0=xcrop, y0=ycrop)
+    x0 = 0
+    y0 = 0
     imsize=size(data.image, /dimensions)
     if n_elements(imsize) lt 2 then begin
        print, '   cropped size: 0, skipping'
@@ -142,6 +137,26 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].YCROP=ycrop
         
     makegrid, imsize[0], imsize[1], x, y
+
+    if( not keyword_set(nosersic) ) then begin
+        diskbulgefit, nod, params, data.image, data.psf, data.ivar, $
+          cs, covar, errors, fitstat, $
+          dof, sky, bulgeSersic=1.0, $ ;4.0*fracDev + 1.0, $ 
+          nodisk=1, freebulge=1, $
+                                ;/free_sky, $
+                   
+        params[5] += xcrop
+        params[6] += ycrop
+        output[i].SERSICFIT[*] = params
+        output[i].CHISQ_SERSIC = cs
+        output[i].PERR_SERSIC[0:7] = errors[0:7]
+        output[i].COVAR_SERSIC[0:7,0:7] = covar[0:7,0:7]          
+        output[i].MPFIT_STATUS[2] = fitstat
+        output[i].DOF_SERSIC = dof
+        ;output[i].SKY_SERSIC = sky
+        ;output[i].SKY_SERSIC_ERR = errors[8]
+        ;output[i].SKY_SERSIC_COVAR = covar[8,0:8]
+    endif
 
                                         ;fit dVc profile
     diskbulgefit,nod,params,data.image,data.psf,data.ivar,$
@@ -268,29 +283,6 @@ for i=0L, n_elements(gals)-1L do begin
 
     
     
-        ;if nosersic is set, then no sersic profile is fit
-        ; fit a single sersic profile
-    if( not keyword_set(nosersic) ) then begin
-        diskbulgefit, nod, params, data.image, data.psf, data.ivar, $
-          cs, covar, errors, fitstat, $
-          dof, sky, bulgeSersic=1.0, $ ;4.0*fracDev + 1.0, $ 
-          nodisk=1, freebulge=1, $
-                                ;/free_sky, $
-        _EXTRA={Reff:output[i].EXPFIT[1]}
-            
-        params[5] += xcrop
-        params[6] += ycrop
-        output[i].SERSICFIT[*] = params
-        output[i].CHISQ_SERSIC = cs
-        output[i].PERR_SERSIC[0:7] = errors[0:7]
-        output[i].COVAR_SERSIC[0:7,0:7] = covar[0:7,0:7]          
-        output[i].MPFIT_STATUS[2] = fitstat
-        output[i].DOF_SERSIC = dof
-        ;output[i].SKY_SERSIC = sky
-        ;output[i].SKY_SERSIC_ERR = errors[8]
-        ;output[i].SKY_SERSIC_COVAR = covar[8,0:8]
-    endif
-
     keep = where(origdata.mask,complement=notkeep)
     output[i].MAD_SKY = median(abs(origdata.image[notkeep]))
     output[i].DOF_BULGE_MASK = n_elements(keep) - $
