@@ -253,7 +253,7 @@ while( again ne 0 and times lt 5 ) do begin
                       functargs={psfImage:data.psf, $
                                  cutoff:1, rescale:rescale}, $
                       perror=errors, covar=covar, weights=data.ivar,$
-                      dof=dof, bestnorm=bn, /quiet, $
+                      dof=dof, bestnorm=bn, $;/quiet, $
                       xtol=1.0e-10, gtol=1.0e-8, ftol=1.0e-6, $
                       status=fitstat, maxiter=200, npegged=npg);, $
                       ;iterproc='iter_plot', ITERARGS={psf:data.psf}, yfit=fit)
