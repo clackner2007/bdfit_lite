@@ -66,7 +66,7 @@ END
 FUNCTION pixelflux, px, py, params, cutoff=cutoff, imax=imax, rescale=rescale
 
 
-if not keyword_set(imax) then imax=8
+if not keyword_set(imax) then imax=15
 
 THRESH = 1.0e-2
 

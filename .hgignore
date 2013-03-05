@@ -1,0 +1,8 @@
+syntax: glob
+pbs
+pbs/*
+RAWFIT*
+*.fits
+NOTES
+bcg_data
+pbs_array*

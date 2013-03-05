@@ -41,6 +41,7 @@ mymask = mrdfits(rootpath+"masks/"+string(id, format='(i0)')+'_seg.fits', 0)
 ;print, rootpath+'psf/'+idpath+'.psf.fits.gz'
 ;locpsf = mrdfits(rootpath+'psf/'+idpath+'.psf_est_red_halo.fits',0)
 locpsf = mrdfits(rootpath+'psf/PSF_small.fits',0)
+locpsf /= total(locpsf)
 mask = mymask
 mask[where(mymask ne 1)] = 0
 
@@ -57,7 +58,7 @@ mask[where(mymask ne 1)] = 0
 ;sec
 ; for the ACS images
 ivar = ivar0
-flip = where(ivar0 ne 0)
+flip = where((ivar0 ne 0) and (mymask ne 0))
 ivar[flip] = 1./(1./ivar0[flip] + im[flip]/2028.0)
 ivar[where(ivarMask eq 1)] = 0.0
 

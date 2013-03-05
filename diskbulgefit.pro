@@ -26,6 +26,7 @@ PRO diskbulgefit, diskparams, bulgeparams, image, psf, iv, $
                   skyVal, free_sky=free_sky, $
                   bulgeSersic=bulgeSersic, $
                   nodisk=nodisk, freebulge=freebulge, $
+                  freedisk=freedisk, $
                   free_coords=free_coords, $
                   negative=negative, fixq=fixq, $
                   rescale=rescale, _EXTRA=_EXTRA
@@ -152,7 +153,7 @@ parinfo[1].limited = [1,0]
 parinfo[1].limits = [0.0, 2.0*sqrt(xlen*ylen*1.0)] ;smaller than the seeing, but not so
                                ;small to get ewrid limits
 parinfo[2].limited = [1,1]
-parinfo[2].limits = [0.1,6.0];[0.1, 9.0]       ; blanton uses 6.0
+parinfo[2].limits = [0.1, 9.0]       ; blanton uses 6.0
 parinfo[2].fixed = 1
 if keyword_set(fixq) then begin
     parinfo[3].fixed=1
@@ -179,7 +180,7 @@ if( nparams ge 16 ) then begin
        parinfo[9].limits=[0.0,1.0]
     endif
     parinfo[10].limited = [1,1]
-    parinfo[10].limits = [0.5,6.0];[0.5, 9.0]     ; blanton uses 6.0
+    parinfo[10].limits = [0.1, 9.0]     ; blanton uses 6.0
     parinfo[10].fixed = 1
     parinfo[11].limited = [1,1]
     parinfo[11].limits = [0.05D,20.0D]
@@ -198,7 +199,8 @@ parinfo[x0_ind+1].limits = [0.0, ylen+0.05]
 ;parinfo[x0_ind].fixed=1
 ;parinfo[x0_ind+1].fixed=1
 
-if (keyword_set(freebulge)) then parinfo[bulge_ind].fixed = 0             
+if (keyword_set(freebulge)) then parinfo[bulge_ind].fixed = 0
+if (keyword_set(freedisk)) then parinfo[2].fixed = 0
 
 ;default is to fix the sky
 parinfo[skyInd].value = 0.0
