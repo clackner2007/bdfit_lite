@@ -43,8 +43,8 @@ mymask = mrdfits(rootpath+"masks/"+string(id, format='(i0)')+'_seg.fits', 0)
 locpsf = mrdfits(rootpath+'psf/PSF_small.fits',0)
 locpsf /= total(locpsf)
 mask = mymask
-mask[where(mymask ne 1)] = 0
-
+mask[where(mymask-ivarMask ne mymask)] = 0
+mask[where(mask ne 0)] = 1
 
 ;ivarMask[where(ivarMask gt 0)] = 1
 ;ivarMask=smooth(ivarMask,50)

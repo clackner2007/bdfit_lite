@@ -149,8 +149,8 @@ if( not keyword_set(negative) ) then begin
     parinfo[0].limited = [1,0]
     parinfo[0].limits = [0.0, 0]
 endif
-parinfo[1].limited = [1,0]
-parinfo[1].limits = [0.0, 2.0*sqrt(xlen*ylen*1.0)] ;smaller than the seeing, but not so
+parinfo[1].limited = [1,1]
+parinfo[1].limits = [0.0, sqrt(xlen*ylen*1.0)] ;smaller than the seeing, but not so
                                ;small to get ewrid limits
 parinfo[2].limited = [1,1]
 parinfo[2].limits = [0.1, 9.0]       ; blanton uses 6.0
@@ -173,8 +173,8 @@ if( nparams ge 16 ) then begin
         parinfo[8].limited = [1,0]
         parinfo[8].limits = [0.0, 0]
      endif
-    parinfo[9].limited = [1,0]
-    parinfo[9].limits = [0.0,1.01]
+    parinfo[9].limited = [1,1]
+    parinfo[9].limits = parinfo[1].limits
     if keyword_set(rescale) then begin 
        parinfo[9].limited=[1,1]
        parinfo[9].limits=[0.0,1.0]
@@ -210,7 +210,7 @@ if not keyword_set(free_sky) then $
 start_params = parinfo[*].value
 
                                         ;normalize psf flux to one
-data.psf /= total(data.psf)
+;data.psf /= total(data.psf)
 
                                         ;normalize maximum pixel value
                                         ;to maximum pixel flux
@@ -252,7 +252,8 @@ while( again ne 0 and times lt 5 ) do begin
     params=mpfit2dfun('pixelfluxpsf', x, y, data.image, $
                       data.ivar, $
                       start_params, parinfo=parinfo, $
-                      functargs={psfImage:data.psf, $
+                      functargs={psfFFT:data.psf,  $
+                                 psfImage:data.psf, $
                                  cutoff:1, rescale:rescale}, $
                       perror=errors, covar=covar, weights=data.ivar,$
                       dof=dof, bestnorm=bn, $;/quiet, $

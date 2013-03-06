@@ -151,37 +151,51 @@ endelse
 rescale=0
 if tag_exist(_EXTRA, 'rescale', /top_level) then rescale=_EXTRA.rescale
 
-if( not tag_exist(_EXTRA, 'psfImage', /top_level) ) then begin
+if( (not tag_exist(_EXTRA, 'psfImage', /top_level)) and $
+    (not tag_exist(_EXTRA, 'psfFFT', /top_level) )) then begin
   if( tag_exist(_EXTRA, 'cutoff', /top_level ) ) then $
   flux=pixelflux(x,y,sparams,cutoff=_EXTRA.cutoff, rescale=rescale) else $
   flux = pixelflux(x,y,sparams,cutoff=0, rescale=rescale)
   return, flux + skyVal
 endif
 
-psfcrop = _EXTRA.psfImage
+if not tag_exist(_EXTRA, 'psfFFT', /top_level) then begin
+
+   psfcrop = _EXTRA.psfImage
 
                                         ;size of oringal psf
- xpsf = (size( psfcrop, /dimensions ))[0]
- ypsf = (size( psfcrop, /dimensions ))[1]
- nx_im = (size(x, /dimensions))[0]
- ny_im = (size(y, /dimensions))[1]
- nx = max([xpsf, nx_im])
- ny = max([ypsf, ny_im])
+   xpsf = (size( psfcrop, /dimensions ))[0]
+   ypsf = (size( psfcrop, /dimensions ))[1]
+   nx_im = (size(x, /dimensions))[0]
+   ny_im = (size(y, /dimensions))[1]
+   nx = max([xpsf, nx_im])
+   ny = max([ypsf, ny_im])
 
- psf = dblarr( nx, ny )
+   psf = dblarr( nx, ny )
 
- psf[nx-xpsf/2, ny-ypsf/2] = psfcrop[0:(xpsf/2-1), 0:(ypsf/2-1)]
- psf[0, ny-ypsf/2] = psfcrop[xpsf/2:xpsf-1, 0:(ypsf/2-1)]
- psf[nx-xpsf/2, 0] = psfcrop[0:(xpsf/2-1), ypsf/2:ypsf-1]
- psf[0, 0] = psfcrop[xpsf/2:xpsf-1, ypsf/2:ypsf-1]
+   psf[nx-xpsf/2, ny-ypsf/2] = psfcrop[0:(xpsf/2-1), 0:(ypsf/2-1)]
+   psf[0, ny-ypsf/2] = psfcrop[xpsf/2:xpsf-1, 0:(ypsf/2-1)]
+   psf[nx-xpsf/2, 0] = psfcrop[0:(xpsf/2-1), ypsf/2:ypsf-1]
+   psf[0, 0] = psfcrop[xpsf/2:xpsf-1, ypsf/2:ypsf-1]
 
+endif else begin
+   psf_fft = _EXTRA.psfFFT
+   xpsf = (size( psf_fft, /dimensions ))[0]
+   ypsf = (size( psf_fft, /dimensions ))[1]
+   nx_im = (size(x, /dimensions))[0]
+   ny_im = (size(y, /dimensions))[1]
+   nx = max([xpsf, nx_im])
+   ny = max([ypsf, ny_im])
+endelse
 
- flux = dblarr( nx, ny )
- if( tag_exist(_EXTRA, 'cutoff', /top_level ) ) then $
+flux = dblarr( nx, ny )
+if( tag_exist(_EXTRA, 'cutoff', /top_level ) ) then $
    flux[(nx-nx_im)/2, (ny-ny_im)/2]=pixelflux(x,y,sparams,$
                                               cutoff=_EXTRA.cutoff, $
-                                             rescale=rescale) else $
-   flux[(nx-nx_im)/2, (ny-ny_im)/2] = pixelflux(x,y,sparams,cutoff=0, rescale=rescale)
+                                              rescale=rescale) $
+else $
+   flux[(nx-nx_im)/2, (ny-ny_im)/2] = $
+   pixelflux(x,y,sparams,cutoff=0, rescale=rescale)
 
  ;flux=reverse(flux,1)
  ;flux=reverse(flux,2)
@@ -190,18 +204,19 @@ psfcrop = _EXTRA.psfImage
 ;  ;flux = smooth( flux, [4,4] )
 
 ;  ;fft
- im_fft = fft( flux, /double)
- psf_fft = fft(psf, /double)
- conv_fft = im_fft * psf_fft
+im_fft = fft( flux, /double)
+if not tag_exist(_EXTRA, 'psfFFT', /top_level) then $
+   psf_fft = fft(psf, /double)
 
- flux = (double(fft(conv_fft,/double, /inverse)))*nx*ny
+conv_fft = im_fft * psf_fft
+
+flux = (double(fft(conv_fft,/double, /inverse)))*nx*ny
  ;flux=reverse(flux,1)
  ;flux=reverse(flux,2)
 ;flux = convolve(flux,psfcrop);,/correlate)
 
 return, flux[(nx-nx_im)/2:(nx-nx_im)/2+nx_im-1, $
              (ny-ny_im)/2:(ny-ny_im)/2 + ny_im-1] + skyVal
-
 
 
 END

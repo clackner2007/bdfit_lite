@@ -117,9 +117,10 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].YCROP=ycrop
         
     makegrid, imsize[0], imsize[1], x, y
+    psf_fft = make_psf_fft(data.psf, data.image)
 
                                         ;fit dVc profile
-    diskbulgefit,nod,params,data.image,data.psf,data.ivar,$
+    diskbulgefit,nod,params,data.image,psf_fft,data.ivar,$
       cs,covar,errors,fitstat,dof, sky, bulgeSersic=4.0, $
       nodisk=1, /free_sky, _EXTRA={Reff:0.2*sqrt(total(data.mask))}
 
@@ -137,7 +138,7 @@ for i=0L, n_elements(gals)-1L do begin
 
    
     if( not keyword_set(nosersic) ) then begin
-        diskbulgefit, nod, params, data.image, data.psf, data.ivar, $
+        diskbulgefit, nod, params, data.image, psf_fft, data.ivar, $
           cs, covar, errors, fitstat, $
           dof, sky, bulgeSersic=4.0, $ ;4.0*fracDev + 1.0, $ 
           nodisk=1, freebulge=1, /free_sky, $
@@ -156,7 +157,7 @@ for i=0L, n_elements(gals)-1L do begin
         output[i].SKY_SERSIC_COVAR = covar[8,0:8]
      endif
 
-    diskbulgefit, diskparam, bulgeparam, data.image, data.psf, data.ivar, $
+    diskbulgefit, diskparam, bulgeparam, data.image, psf_fft, data.ivar, $
                   chsqds, covards, errds, stat, dofds, sky, bulgeSersic=4.0D, $
                   /free_sky, /freebulge, /freedisk, $
                   _EXTRA={Reff:params[1], q:params[3], phi:params[7], $

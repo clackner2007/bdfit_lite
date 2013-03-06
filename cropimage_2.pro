@@ -30,7 +30,7 @@ high = (good / nx)[totgood-1]
 
 
 totsky = n_elements(where(mask[left:right,low:high] eq 0))
-ratiosky = 2
+ratiosky = 5
 
 if totsky lt ratiosky*totgood then begin
    xmid = (right - left)/2 + left
