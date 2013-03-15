@@ -61,6 +61,7 @@ ivar = ivar0
 flip = where((ivar0 ne 0) and (mymask ne 0))
 ivar[flip] = 1./(1./ivar0[flip] + im[flip]/2028.0)
 ivar[where(ivarMask eq 1)] = 0.0
+im[where(ivarMask eq 1)] = 0.0
 
 ;mask negative flux, these are noise dominated pixels
 nulls=where(ivar lt 0.0,n_nulls)

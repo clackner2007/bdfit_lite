@@ -75,11 +75,11 @@ def main():
 
     #read the data
     data=pyfits.open(args[0])[1].data
-    num={'BULGE':0,'DISK':1,'DVC':2,'EXP':3,'SERSIC':4}
+    num={'DSERSIC':0, 'BULGE':0,'DISK':1,'DVC':2,'EXP':3,'SERSIC':1}
 
     model = str.upper(opts.model)
     if model not in num.keys():
-        model='BULGE'
+        model='SERSIC'
 
     #write the n_b=4 b+d page
     s  = "<html>\n"
@@ -89,43 +89,41 @@ def main():
     for i in range(min(50,len(data))):
         s += "<tr>\n"
         s2 = "<table>\n"
-        keys=['GALID','ALPHA_J2000','DELTA_J2000',
-            'CHISQ_%s'%model, 'CHISQ_%s_MASK'%model,
-          'FRACDEV', #'ZEST_TYPE',
+        keys=['IDENT',#'ALPHA_J2000','DELTA_J2000',
+            'CHISQ_%s'%model,
+          #'FRACDEV', #'ZEST_TYPE',
             'MAD_SKY']
-        if model=='BULGE':
-            keys.append('DVC_BTT')
-            keys.append('MAD_DVCB_MASK')
-            keys.append('SKY_BULGE')
-            keys.append('SKY_BULGE_ERR')
-        elif model=='DISK':
-            keys.append('EXP_BTT')
-            keys.append('MAD_EXPB_MASK')
-        else:
-            keys.append('MAD_%s_MASK'%model)
-    #keys=('GALID','ALPHA_J2000','DELTA_J2000','CHISQ_BULGE',
+        if model=='DSERSIC':
+            keys.append('REFF_DSERSIC')
+            keys.append('FLUX_RATIO_DSERSIC')
+
+        keys.append('MAD_%s_MASK'%model)
+    #keys=('IDENT','ALPHA_J2000','DELTA_J2000','CHISQ_BULGE',
     #      'FRACDEV')
         for k in keys:
             v = data[i][k]
             s2 +=  "<tr><td>%s:</td><td>%s</td></tr>\n" % (k, str(v))
 
         s2 +=  "<tr><td>%s</td><td>%s</td></tr>\n" % ('SERSIC N:', str(data[i]['SERSICFIT'][2]))
+        if model=='DSERSIC':
+            s2 +=  "<tr><td>%s</td><td>%.2f,%.2f</td></tr>\n" % ('DSERSIC NS:', data[i]['DSERSICFIT'][2],
+                                                                 data[i]['DSERSICFIT'][10])
 #    s2 +=  "<tr><td>%s</td><td>%s</td></tr>\n" % ('B/T:', str(data[i]['SERSICFIT'][2]))
         s2 += "</table>\n"
         s += "<td>%s</td>\n" % (s2)
 
     #get the images
         try:
-            realImage = pyfits.open(args[1]+'images/{0}.0_{1:f}_{2:f}_processed.fits.gz'.\
-                    format(data.GALID[i],data.ALPHA_J2000[i],data.DELTA_J2000[i]))[0].data
-            ivarImage = pyfits.open(args[1]+'ivar/{0}.0_{1:f}_{2:f}.wht.mask.fits'.\
-                    format(data.GALID[i],data.ALPHA_J2000[i],data.DELTA_J2000[i]))[0].data
-            psfImage = pyfits.open(args[1]+'psf/{0}.0_{1:f}_{2:f}.psf.fits.gz'.\
-                   format(data.GALID[i],data.ALPHA_J2000[i],data.DELTA_J2000[i]))[0].data
+            realImage = pyfits.open(args[1]+'images/{0}.fits'. \
+                    format(data.FILENAME[i]))[0].data
+            #ivarImage = pyfits.open(args[1]+'ivar/{0}.0_{1:f}_{2:f}.wht.mask.fits'.\
+            #        format(data.IDENT[i],data.ALPHA_J2000[i],data.DELTA_J2000[i]))[0].data
+            #psfImage = pyfits.open(args[1]+'psf/{0}.0_{1:f}_{2:f}.psf.fits.gz'.\
+            #       format(data.IDENT[i],data.ALPHA_J2000[i],data.DELTA_J2000[i]))[0].data
             modelImage = pyfits.open(args[2]+'M{0:09d}.fits'.\
-                     format(int(data.GALID[i])))[num[model]].data
+                     format(int(data.IDENT[i])))[num[model]].data
         except IOError:
-            s+= "<td>couldn't open image files for "+repr(data.GALID[i])+"</td>\n</tr>\n"
+            s+= "<td>couldn't open image files for "+repr(data.IDENT[i])+"</td>\n</tr>\n"
             continue
 
         imX, imY = realImage.shape
@@ -146,7 +144,7 @@ def main():
         modelImage=modelImage[y0:y0+imY-1,x0:x0+imX-1]
 
         modelfit='%sFIT'%model
-        if model in ('DISK', 'BULGE'):
+        if model in ('DISK', 'BULGE', 'DSERSIC'):
             bulgereff=data[i][modelfit][9]
             bulgeq=data[i][modelfit][11]
             bulgephi=data[i][modelfit][15]
@@ -157,8 +155,9 @@ def main():
             bulgecenY=data[i][modelfit][14]
             diskcenX=data[i][modelfit][5]
             diskcenY=data[i][modelfit][6]
-            btt={'BULGE':data[i]['DVC_BTT'],
-                 'DISK':data[i]['EXP_BTT']}[model]
+            btt={'BULGE':1.0,
+                 'DISK':0.0,
+                'DSERSIC':data[i]['FLUX_RATIO_DSERSIC']}[model]
         else:
             bulgereff=data[i][modelfit][1]
             bulgeq=data[i][modelfit][3]
@@ -206,16 +205,16 @@ def main():
             bulgecenX-x0, bulgecenY-y0,
             diskcenX-x0, diskcenY-y0,
             imX, imY, btt)
-        ax4=fig.add_subplot(144)
-        ax4.imshow(np.arcsinh(psfImage),aspect='equal')
-        ax4.tick_params(labelleft='off',labelbottom='off',labelright='on',
-            labelsize='xx-small')
-        ax4.set_xlim(0,imX)
-        ax4.set_ylim(imY,0)
+        #ax4=fig.add_subplot(144)
+        #ax4.imshow(np.arcsinh(psfImage),aspect='equal')
+        #ax4.tick_params(labelleft='off',labelbottom='off',labelright='on',
+        #    labelsize='xx-small')
+        #ax4.set_xlim(0,imX)
+        #ax4.set_ylim(imY,0)
 
-        fig.savefig('{2}/{1}fit/{0:09d}.png'.format(int(data.GALID[i]),
+        fig.savefig('{2}/{1}fit/{0:09d}.png'.format(int(data.IDENT[i]),
              str.lower(model), args[3]))
-        s += "<td><img src=\"{1}fit/{0:09d}.png\"></td>\n".format(int(data.GALID[i]),
+        s += "<td><img src=\"{1}fit/{0:09d}.png\"></td>\n".format(int(data.IDENT[i]),
                                                             str.lower(model))
         s += "</tr>\n"
 

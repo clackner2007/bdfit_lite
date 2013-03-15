@@ -29,22 +29,28 @@ low = (good / nx)[0]
 high = (good / nx)[totgood-1]
 
 
-totsky = n_elements(where(mask[left:right,low:high] eq 0))
+totsky = n_elements(where((mask[left:right,low:high] eq 0) and $
+                          (ivar[left:right,low:high] ne 0.0)))
 ratiosky = 5
+adjust = 0
 
-if totsky lt ratiosky*totgood then begin
+while ((totsky lt ratiosky*totgood) and $
+       ((left gt 0) or (right lt nx-1) or (low gt 0) or $
+        (high lt ny-1))) do begin
+   print, totsky, totgood*ratiosky, left, right, low, high
    xmid = (right - left)/2 + left
    ymid = (high - low)/2 + low
    q = (high - low)*1.0 / (right-left)
-   totarr = (ratiosky + 1)*totgood
+   totarr = (ratiosky +adjust*0.1 + 1)*totgood
   
-   left = max([0, xmid - fix(sqrt(totarr/q)*0.5)])
-   right = min([nx-1, xmid + fix(sqrt(totarr/q)*0.5)])
-   low = max([0, ymid - fix(sqrt(totarr*q)*0.5)])
-   high = min([ny-1, ymid + fix(sqrt(totarr*q)*0.5)])
-   totsky = n_elements(where(mask[left:right,low:high] eq 0))
-    
-endif
+   left = max([min([left-1, xmid - fix(sqrt(totarr/q)*0.5)]), 0])
+   right = min([max([right+1, xmid + fix(sqrt(totarr/q)*0.5)]), nx-1])
+   low = max([0, min([low-1, ymid - fix(sqrt(totarr*q)*0.5)])])
+   high = min([ny-1, max([high+1,ymid + fix(sqrt(totarr*q)*0.5)])])
+   totsky = n_elements(where((mask[left:right,low:high] eq 0) and $
+                             (ivar[left:right,low:high] ne 0.0)))
+   adjust += 1
+endwhile
 
 
 x0 = left

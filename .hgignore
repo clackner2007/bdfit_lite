@@ -6,3 +6,5 @@ RAWFIT*
 NOTES
 bcg_data
 pbs_array*
+plots/www/*
+plots/*.png

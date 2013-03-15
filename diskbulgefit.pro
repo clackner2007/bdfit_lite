@@ -58,6 +58,7 @@ makegrid, xlen, ylen, x, y
                                         ;direction (as in cropimage.pro)
 ;y0 = (where(total(data.image,1) eq max(total(data.image,1))))[0]
 ;x0 = (where(total(data.image,2) eq max(total(data.image,2))))[0]
+
 ys=reverse(sort(smooth(total(data.image,1),min([4, ylen-1]))))
 xs=reverse(sort(smooth(total(data.image,2),min([4, xlen-1]))))
 y0=ys[0]
