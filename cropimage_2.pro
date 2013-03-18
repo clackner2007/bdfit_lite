@@ -31,7 +31,7 @@ high = (good / nx)[totgood-1]
 
 totsky = n_elements(where((mask[left:right,low:high] eq 0) and $
                           (ivar[left:right,low:high] ne 0.0)))
-ratiosky = 5
+ratiosky = 9
 adjust = 0
 
 while ((totsky lt ratiosky*totgood) and $
