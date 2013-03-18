@@ -8,3 +8,4 @@ bcg_data
 pbs_array*
 plots/www/*
 plots/*.png
+*spy.session.tar

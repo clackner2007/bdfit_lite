@@ -27,22 +27,27 @@ if not keyword_set(redo) then begin
                                            'SERSICFIT', $
                                            'DVCFIT', $
                                            'DDVCFIT', $
+                                           'EXPSERSICFIT', $
                                            'CHISQ_DSERSIC', $
                                            'CHISQ_SERSIC', $
                                            'CHISQ_DVC',$
                                            'CHISQ_DDVC', $
+                                           'CHISQ_EXPSERSIC', $
                                            'COVAR_DSERSIC', $
                                            'COVAR_SERSIC', $
                                            'COVAR_DVC', $
                                            'COVAR_DDVC', $
+                                           'COVAR_EXPSERSIC', $
                                            'PERR_DSERSIC',$
                                            'PERR_SERSIC',$
                                            'PERR_DVC', $
                                            'PERR_DDVC', $
+                                           'PERR_EXPSERSIC', $
                                            'DOF_DSERSIC', $
                                            'DOF_SERSIC', $
                                            'DOF_DVC', $
                                            'DOF_DDVC', $
+                                           'DOF_EXPSERSIC', $
                                            'MPFIT_STATUS', $
                                            'XCROP', 'YCROP',$
                                            'XLEN', 'YLEN',$
@@ -55,6 +60,8 @@ if not keyword_set(redo) then begin
                                            'MAD_DVC_MASK',$
                                            'MAD_DDVC', $
                                            'MAD_DDVC_MASK',$
+                                           'MAD_EXPSERSIC', $
+                                           'MAD_EXPSERSIC_MASK',$
                                            'SKY_DSERSIC', $
                                            'SKY_DSERSIC_ERR', $
                                            'SKY_DSERSIC_COVAR', $
@@ -67,27 +74,36 @@ if not keyword_set(redo) then begin
                                            'SKY_DDVC', $
                                            'SKY_DDVC_ERR', $
                                            'SKY_DDVC_COVAR', $
+                                           'SKY_EXPSERSIC', $
+                                           'SKY_EXPSERSIC_ERR', $
+                                           'SKY_EXPSERSIC_COVAR', $
                                            'FLUX_RATIO_DSERSIC', $
                                            'REFF_DSERSIC', $
                                            'FLUX_RATIO_DDVC', $
-                                           'REFF_DDVC'], $
+                                           'REFF_DDVC', $
+                                           'FLUX_RATIO_EXPSERSIC', $
+                                           'REFF_EXPSERSIC'], $
                                  dblarr(16), dblarr(8), $
-                                 dblarr(8), dblarr(16), 0.0D, $
-                                 0.0D, 0.0D, 0.0D, dblarr(16,16), $
-                                 dblarr(8,8), dblarr(8,8), $
-                                 dblarr(16,16), $
-                                 dblarr(16), dblarr(8), $
-                                 dblarr(8), dblarr(16), $
+                                 dblarr(8), dblarr(16), dblarr(16), $
+                                 0.0D, $
                                  0.0D, 0.0D, 0.0D, 0.0D, $
-                                 dblarr(4), $
+                                 dblarr(16,16), $
+                                 dblarr(8,8), dblarr(8,8), $
+                                 dblarr(16,16), dblarr(16,16), $
+                                 dblarr(16), dblarr(8), $
+                                 dblarr(8), dblarr(16), dblarr(16), $
+                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
+                                 dblarr(5), $
                                  0L, 0L, 0L, 0L, $
-                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
-                                 0.0D, 0.0D, 0.0D, $
+                                 0.0D, $
+                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
+                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
                                  0.0D, 0.0D, dblarr(17), $
                                  0.0D, 0.0D, dblarr(9), $
                                  0.0D, 0.0D, dblarr(9), $
                                  0.0D, 0.0D, dblarr(17), $
-                                 0.0D, 0.0D, 0.0D, 0.0D )
+                                 0.0D, 0.0D, dblarr(17), $
+                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D )
 
 endif else output_entry = create_struct(gals[0])
 
@@ -218,6 +234,26 @@ for i=0L, n_elements(gals)-1L do begin
 
     output[i].FLUX_RATIO_DDVC = bulgetotot(output[i].DDVCFIT, /cutoff)
 
+    diskbulgefit, diskparam, bulgeparam, data.image, psf_fft, data.ivar, $
+                  chsqds, covards, errds, stat, dofds, sky, bulgeSersic=4.0D, $
+                  /free_sky, diskSersic=1.0D, /freebulge, $
+                  _EXTRA={Reff:params[1]*4.0, q:params[3], phi:params[7], $
+                          fracdev:0.2}
+    output[i].MPFIT_STATUS[0] = stat
+    output[i].SKY_EXPSERSIC = sky
+    output[i].SKY_EXPSERSIC_ERR = errds[16]
+    output[i].SKY_EXPSERSIC_COVAR = covards[16,0:16]
+    diskparam[5:6] += [xcrop, ycrop]
+    bulgeparam[5:6] += [xcrop, ycrop]
+    output[i].PERR_EXPSERSIC = errds[0:15]
+    output[i].COVAR_EXPSERSIC = covards[0:15,0:15]
+    output[i].CHISQ_EXPSERSIC = chsqds
+    output[i].DOF_EXPSERSIC = dofds
+    
+    output[i].EXPSERSICFIT = [diskparam[*], bulgeparam[*]]
+
+    output[i].FLUX_RATIO_EXPSERSIC = bulgetotot(output[i].EXPSERSICFIT, /cutoff)
+
     print, 'timed: ',systime(1)-t1
 
 
@@ -294,7 +330,26 @@ for i=0L, n_elements(gals)-1L do begin
     if keyword_set(residuals) then begin
        mwrfits, model, modName
     endif
-
+    
+    model = pixelfluxpsf(x,y,$
+                         [output[i].EXPSERSICFIT,output[i].SKY_EXPSERSIC], $
+                         _EXTRA={cutoff:1,psfImage:data.psf})
+        
+    output[i].MAD_EXPSERSIC = median(abs(origdata.image-model))
+    output[i].MAD_EXPSERSIC_MASK = median(abs((origdata.image-model)[keep]))
+    half_flux = 0.5*totalsersicflux(output[i].EXPSERSICFIT, /cutoff)
+    output[i].REFF_EXPSERSIC = $
+       fluxfraction_radius(model-output[i].SKY_EXPSERSIC, $
+                           fluxlevel=half_flux, $
+                           q=output[i].DVCFIT[3], $
+                           phi=output[i].DVCFIT[7], $
+                           x0=output[i].EXPSERSICFIT[5], $
+                           y0=output[i].EXPSERSICFIT[6], $
+                           guess=[0.0, max([output[i].EXPSERSICFIT[9], $
+                                            output[i].EXPSERSICFIT[1]])])
+    if keyword_set(residuals) then begin
+       mwrfits, model, modName
+    endif
 
 endfor
 ;close,1
