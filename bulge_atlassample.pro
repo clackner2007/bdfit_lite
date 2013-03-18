@@ -23,54 +23,71 @@ gals = mrdfits(filename,1,range=[start,last-1])
 ;output entry for each object, the size of the array is for the bands,
 ;the default is five
 if not keyword_set(redo) then begin
-    output_entry = create_struct( gals[0], ['DSERSICFIT', $
-                                            'SERSICFIT', $
-                                            'DVCFIT', $
-                                            'CHISQ_DSERSIC', $
-                                            'CHISQ_SERSIC', $
-                                            'CHISQ_DVC',$
-                                            'COVAR_DSERSIC', $
-                                            'COVAR_SERSIC', $
-                                            'COVAR_DVC', $
-                                            'PERR_DSERSIC',$
-                                            'PERR_SERSIC',$
-                                            'PERR_DVC', $
-                                            'DOF_DSERSIC', $
-                                            'DOF_SERSIC', $
-                                            'DOF_DVC', $
-                                            'MPFIT_STATUS', $
-                                            'XCROP', 'YCROP',$
-                                            'XLEN', 'YLEN',$
-                                            'MAD_SKY', $
-                                            'MAD_DSERSIC', $
-                                            'MAD_DSERSIC_MASK', $
-                                            'MAD_SERSIC', $
-                                            'MAD_SERSIC_MASK', $
-                                            'MAD_DVC', $
-                                            'MAD_DVC_MASK',$
-                                            'SKY_DSERSIC', $
-                                            'SKY_DSERSIC_ERR', $
-                                            'SKY_DSERSIC_COVAR', $
-                                            'SKY_SERSIC', $
-                                            'SKY_SERSIC_ERR', $
-                                            'SKY_SERSIC_COVAR', $
-                                            'SKY_DVC', $
-                                            'SKY_DVC_ERR', $
-                                            'SKY_DVC_COVAR', $
-                                            'FLUX_RATIO_DSERSIC', $
-                                            'REFF_DSERSIC'], $
-                                  dblarr(16), dblarr(8), $
-                                  dblarr(8), 0.0D, $
-                                  0.0D, 0.0D, dblarr(16,16), $
-                                  dblarr(8,8), dblarr(8,8), $
-                                  dblarr(16), dblarr(8), $
-                                  dblarr(8), 0.0D, 0.0D, 0.0D, $
-                                  dblarr(3), $
-                                  0L, 0L, 0L, 0L, $
-                                  0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
-                                  0.0D, 0.0D, dblarr(17), $
-                                  0.0D, 0.0D, dblarr(9), $
-                                  0.0D, 0.0D, dblarr(9), 0.0D, 0.0D )
+   output_entry = create_struct( gals[0], ['DSERSICFIT', $
+                                           'SERSICFIT', $
+                                           'DVCFIT', $
+                                           'DDVCFIT', $
+                                           'CHISQ_DSERSIC', $
+                                           'CHISQ_SERSIC', $
+                                           'CHISQ_DVC',$
+                                           'CHISQ_DDVC', $
+                                           'COVAR_DSERSIC', $
+                                           'COVAR_SERSIC', $
+                                           'COVAR_DVC', $
+                                           'COVAR_DDVC', $
+                                           'PERR_DSERSIC',$
+                                           'PERR_SERSIC',$
+                                           'PERR_DVC', $
+                                           'PERR_DDVC', $
+                                           'DOF_DSERSIC', $
+                                           'DOF_SERSIC', $
+                                           'DOF_DVC', $
+                                           'DOF_DDVC', $
+                                           'MPFIT_STATUS', $
+                                           'XCROP', 'YCROP',$
+                                           'XLEN', 'YLEN',$
+                                           'MAD_SKY', $
+                                           'MAD_DSERSIC', $
+                                           'MAD_DSERSIC_MASK', $
+                                           'MAD_SERSIC', $
+                                           'MAD_SERSIC_MASK', $
+                                           'MAD_DVC', $
+                                           'MAD_DVC_MASK',$
+                                           'MAD_DDVC', $
+                                           'MAD_DDVC_MASK',$
+                                           'SKY_DSERSIC', $
+                                           'SKY_DSERSIC_ERR', $
+                                           'SKY_DSERSIC_COVAR', $
+                                           'SKY_SERSIC', $
+                                           'SKY_SERSIC_ERR', $
+                                           'SKY_SERSIC_COVAR', $
+                                           'SKY_DVC', $
+                                           'SKY_DVC_ERR', $
+                                           'SKY_DVC_COVAR', $
+                                           'SKY_DDVC', $
+                                           'SKY_DDVC_ERR', $
+                                           'SKY_DDVC_COVAR', $
+                                           'FLUX_RATIO_DSERSIC', $
+                                           'REFF_DSERSIC', $
+                                           'FLUX_RATIO_DDVC', $
+                                           'REFF_DDVC'], $
+                                 dblarr(16), dblarr(8), $
+                                 dblarr(8), dblarr(16), 0.0D, $
+                                 0.0D, 0.0D, 0.0D, dblarr(16,16), $
+                                 dblarr(8,8), dblarr(8,8), $
+                                 dblarr(16,16), $
+                                 dblarr(16), dblarr(8), $
+                                 dblarr(8), dblarr(16), $
+                                 0.0D, 0.0D, 0.0D, 0.0D, $
+                                 dblarr(4), $
+                                 0L, 0L, 0L, 0L, $
+                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
+                                 0.0D, 0.0D, 0.0D, $
+                                 0.0D, 0.0D, dblarr(17), $
+                                 0.0D, 0.0D, dblarr(9), $
+                                 0.0D, 0.0D, dblarr(9), $
+                                 0.0D, 0.0D, dblarr(17), $
+                                 0.0D, 0.0D, 0.0D, 0.0D )
 
 endif else output_entry = create_struct(gals[0])
 
@@ -178,6 +195,29 @@ for i=0L, n_elements(gals)-1L do begin
        output[i].DSERSICFIT = [diskparam[*], bulgeparam[*]]
 
     output[i].FLUX_RATIO_DSERSIC = bulgetotot(output[i].DSERSICFIT, /cutoff)
+
+    diskbulgefit, diskparam, bulgeparam, data.image, psf_fft, data.ivar, $
+                  chsqds, covards, errds, stat, dofds, sky, bulgeSersic=4.0D, $
+                  /free_sky, diskSersic=4.0D, $
+                  _EXTRA={Reff:params[1]*4.0, q:params[3], phi:params[7], $
+                          fracdev:0.1}
+    output[i].MPFIT_STATUS[0] = stat
+    output[i].SKY_DDVC = sky
+    output[i].SKY_DDVC_ERR = errds[16]
+    output[i].SKY_DDVC_COVAR = covards[16,0:16]
+    diskparam[5:6] += [xcrop, ycrop]
+    bulgeparam[5:6] += [xcrop, ycrop]
+    output[i].PERR_DDVC = errds[0:15]
+    output[i].COVAR_DDVC = covards[0:15,0:15]
+    output[i].CHISQ_DDVC = chsqds
+    output[i].DOF_DDVC = dofds
+    if diskparam[1] lt bulgeparam[1] then $
+       output[i].DDVCFIT = [bulgeparam[*], diskparam[*]] $
+    else $
+       output[i].DDVCFIT = [diskparam[*], bulgeparam[*]]
+
+    output[i].FLUX_RATIO_DDVC = bulgetotot(output[i].DDVCFIT, /cutoff)
+
     print, 'timed: ',systime(1)-t1
 
 
@@ -231,6 +271,26 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].MAD_DVC = median(abs(origdata.image-model))
     output[i].MAD_DVC_MASK = median(abs((origdata.image-model)[keep]))
 
+    if keyword_set(residuals) then begin
+       mwrfits, model, modName
+    endif
+
+    model = pixelfluxpsf(x,y,$
+                         [output[i].DDVCFIT,output[i].SKY_DDVC], $
+                         _EXTRA={cutoff:1,psfImage:data.psf})
+        
+    output[i].MAD_DDVC = median(abs(origdata.image-model))
+    output[i].MAD_DDVC_MASK = median(abs((origdata.image-model)[keep]))
+    half_flux = 0.5*totalsersicflux(output[i].DDVCFIT, /cutoff)
+    output[i].REFF_DDVC = $
+       fluxfraction_radius(model-output[i].SKY_DDVC, $
+                           fluxlevel=half_flux, $
+                           q=output[i].DVCFIT[3], $
+                           phi=output[i].DVCFIT[7], $
+                           x0=output[i].DDVCFIT[5], $
+                           y0=output[i].DDVCFIT[6], $
+                           guess=[0.0, max([output[i].DDVCFIT[9], $
+                                            output[i].DDVCFIT[1]])])
     if keyword_set(residuals) then begin
        mwrfits, model, modName
     endif

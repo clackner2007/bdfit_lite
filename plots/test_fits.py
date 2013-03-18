@@ -127,11 +127,40 @@ def main():
     #
     #two component fits
     plt.clf()
-    plt.subplot(221)
+    plt.subplot(231)
     plt.xlabel('galfit re')
     plt.ylabel('cnl 2comp re - galfit re')
-    plt.plot(dgalfit['RE_SERSIC'], dfull['REFF_DSERSIC']-dgalfit['RE_SERSIC'], 'r.', label='full')
-
+    plt.plot(dgalfit['RE_SERSIC'], dfull['REFF_DSERSIC']-dgalfit['RE_SERSIC'], 'ms', label='full')
+    plt.subplot(232)
+    plt.xlabel('galfit re')
+    plt.ylabel('cnl 2comp re  / galfit re')
+    plt.plot(dgalfit['RE_SERSIC'], dfull['DSERSICFIT'][:,9]/dgalfit['RE_SERSIC'], 'r.', label='re1')
+    plt.plot(dgalfit['RE_SERSIC'], dfull['DSERSICFIT'][:,1]/dgalfit['RE_SERSIC'], 'bx', label='re2')
+    plt.yscale('log')
+    plt.subplot(233)
+    plt.xlabel('cnl B/T flux')
+    plt.ylabel('re ratio')
+    plt.plot(dfull['FLUX_RATIO_DSERSIC'], dfull['DSERSICFIT'][:,9]/dgalfit['RE_SERSIC'], 'r.')
+    plt.plot(dfull['FLUX_RATIO_DSERSIC'], dfull['DSERSICFIT'][:,1]/dgalfit['RE_SERSIC'], 'bx')
+    plt.yscale('log')
+    plt.hlines(1,0,1)
+    plt.subplot(234)
+    plt.plot(dgalfit['N_SERSIC'], dfull['DSERSICFIT'][:,2], 'bx')
+    plt.plot(dgalfit['N_SERSIC'], dfull['DSERSICFIT'][:,10], 'r.')
+    plt.plot([0,9], [0,9], 'k-')
+    plt.xlabel('galfit n')
+    plt.ylabel('cnl n')
+    plt.subplot(235)
+    plt.xlabel('galfit mag')
+    plt.ylabel('cnl mag - galfit mag')
+    plt.plot(dfull['FLUX_RATIO_DSERSIC'], #dgalfit['MAG_SERSIC'],
+             mag([totalflux(dd[:8])+totalflux(dd[8:])
+                 for dd in dfull['DSERSICFIT']])-
+             dgalfit['MAG_SERSIC'], 'ms', mew=0, ms=3, label='full')
+    plt.plot(dfull['FLUX_RATIO_DSERSIC'], #galfit['MAG_SERSIC'],
+             mag([totalflux(dd[8:])
+                 for dd in dfull['DSERSICFIT']])-
+             dgalfit['MAG_SERSIC'], 'r.', label='full')
     plt.savefig('dser_comp.png')
 
     return 0

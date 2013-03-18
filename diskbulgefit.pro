@@ -25,6 +25,7 @@ PRO diskbulgefit, diskparams, bulgeparams, image, psf, iv, $
                   chisquare, covar, errors,  status, degfree, $
                   skyVal, free_sky=free_sky, $
                   bulgeSersic=bulgeSersic, $
+                  diskSersic=diskSersic, $
                   nodisk=nodisk, freebulge=freebulge, $
                   freedisk=freedisk, $
                   free_coords=free_coords, $
@@ -87,10 +88,12 @@ parinfo=replicate({value:0.D, fixed:0, $
                                         ;define parinfo, which gives limits to
                                         ;parameters as well as starting values
 
+if not keyword_set(diskSersic) then diskSersic=1.0
+
 if(keyword_set(nodisk)) then parinfo[*].value = [1.0,10.,bulgeSersic, $
                                                 0.7,0.0,x0,y0,0.2, 0.0] $
 else begin
-    parinfo[*].value = [1.0, 30.1, 1.0, 0.85, $
+    parinfo[*].value = [1.0, 30.1, diskSersic, 0.85, $
                         0.0, x0, y0, 0.2, $
                         1.0, 8.1, bulgeSersic, 0.7, 0.0, $
                         x0, y0, 0.2, 0.0]
