@@ -16,6 +16,6 @@
 
 nm=`grep "#PBS -N" $1 | awk '{print $3}'`
 echo $nm
-grep 'writing output file' pbs/*$nm*out* | sed 's/.*out-\([0-9]\+\):.*/\1/' > done
+grep 'writing output file' pbs/*$nm*out* | sed 's/.*out-\([0-9]\+\):.*/\1/' | sort -n > done
 grep "#PBS -t" $1 | grep -o [0-9]* > attempt
 comm -13 <(sort done) <(sort attempt) | sort -n > failed
