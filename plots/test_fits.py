@@ -48,33 +48,33 @@ def mag(flux, zeropt=25.959):
 def main():
 
     f1='../bcg_data/imgs_BCG_comb.fits'
-    f2='../bcg_data/outputs/total_allRAW.fits'
-    f3='../bcg_data/outputs/total_cropRAW.fits'
+    f2='../bcg_data/outputs/total_longRAW.fits'
+    #f3='../bcg_data/outputs/total_cropRAW.fits'
 
     dgalfit = pyfits.open(f1)[1].data
     dfull = pyfits.open(f2)[1].data
-    dtrunc = pyfits.open(f3)[1].data
+    #dtrunc = pyfits.open(f3)[1].data
 
-    galid = list(np.intersect1d(dfull.IDENT, dtrunc.IDENT))
+    galid = dfull.IDENT #list(np.intersect1d(dfull.IDENT, dtrunc.IDENT))
     idgalfit = np.array([dict(zip(dgalfit.IDENT, range(len(dgalfit))))[i]
                         for i in galid])
     idfull = np.array([dict(zip(dfull.IDENT, range(len(dfull))))[i]
                         for i in galid])
-    idtrunc = np.array([dict(zip(dtrunc.IDENT, range(len(dtrunc))))[i]
-                        for i in galid])
+    #idtrunc = np.array([dict(zip(dtrunc.IDENT, range(len(dtrunc))))[i]
+    #                    for i in galid])
     dgalfit=dgalfit[idgalfit]
     dfull=dfull[idfull]
-    dtrunc=dtrunc[idtrunc]
+    #dtrunc=dtrunc[idtrunc]
 
     print len(dfull)
     print dfull['SERSICFIT'][np.where(dfull.IDENT==192620)]
     print dfull['XLEN'][np.where(dfull.IDENT==192620)],
     print dfull['YLEN'][np.where(dfull.IDENT==192620)]
     print dfull['FILENAME'][np.where(dfull.IDENT==192620)]
-    print dfull['DSERSICFIT'][np.where(dfull['REFF_DSERSIC']-dgalfit['RE_SERSIC'] > 50)]
-    print dfull['IDENT'][np.where(dfull['REFF_DSERSIC']-dgalfit['RE_SERSIC'] > 50)]
-    print dfull['FILENAME'][np.where(dfull['REFF_DSERSIC']-dgalfit['RE_SERSIC'] > 50)]
-    print dgalfit['RE_SERSIC'][np.where(dfull['REFF_DSERSIC']-dgalfit['RE_SERSIC'] > 50)]
+    print dfull['DDVCFIT'][np.where(dfull['REFF_DDVC']-dgalfit['RE_SERSIC'] > 50)]
+    print dfull['IDENT'][np.where(dfull['REFF_DDVC']-dgalfit['RE_SERSIC'] > 50)]
+    print dfull['FILENAME'][np.where(dfull['REFF_DDVC']-dgalfit['RE_SERSIC'] > 50)]
+    print dgalfit['RE_SERSIC'][np.where(dfull['REFF_DDVC']-dgalfit['RE_SERSIC'] > 50)]
 
 #    print dtrunc['IDENT'][np.where(dtrunc['SERSICFIT'][:,1]-dgalfit['RE_SERSIC'] > 50)]
 #    print dtrunc['SERSICFIT'][np.where(dtrunc['SERSICFIT'][:,1]-dgalfit['RE_SERSIC'] > 50),2]
@@ -83,13 +83,13 @@ def main():
 
 
   #  print dfull['SKY_SERSIC']
-   # print dfull['SKY_DSERSIC']
+   # print dfull['SKY_DDVC']
 
     plt.ion()
 
     #dev size compare
     plt.plot(dgalfit['RE_DEV'], dfull['DVCFIT'][:,1]-dgalfit['RE_DEV'], 'r.', label='full')
-    plt.plot(dgalfit['RE_DEV'], dtrunc['DVCFIT'][:,1]-dgalfit['RE_DEV'], 'bx', label='trunc')
+    #plt.plot(dgalfit['RE_DEV'], dtrunc['DVCFIT'][:,1]-dgalfit['RE_DEV'], 'bx', label='trunc')
     plt.xlabel('galfit')
     plt.ylabel('cnl-galfit')
    # plt.legend()
@@ -99,67 +99,66 @@ def main():
     plt.clf()
     plt.subplot(221)
     plt.plot(dgalfit['RE_SERSIC'], dfull['SERSICFIT'][:,1]-dgalfit['RE_SERSIC'], 'r.', label='full')
-    plt.plot(dgalfit['RE_SERSIC'], dtrunc['SERSICFIT'][:,1]-dgalfit['RE_SERSIC'], 'bx', label='trunc')
+    #plt.plot(dgalfit['RE_SERSIC'], dtrunc['SERSICFIT'][:,1]-dgalfit['RE_SERSIC'], 'bx', label='trunc')
     plt.xlabel('galfit re')
     plt.ylabel('cnl-galfit re')
     #plt.legend()
     plt.subplot(222)
     plt.plot(dgalfit['N_SERSIC'], dfull['SERSICFIT'][:,2]-dgalfit['N_SERSIC'], 'r.', label='full')
-    plt.plot(dgalfit['N_SERSIC'], dtrunc['SERSICFIT'][:,2]-dgalfit['N_SERSIC'], 'bx', label='trunc')
+    #plt.plot(dgalfit['N_SERSIC'], dtrunc['SERSICFIT'][:,2]-dgalfit['N_SERSIC'], 'bx', label='trunc')
     plt.xlabel('galfit n')
     plt.ylabel('cnl-galfit n')
     plt.subplot(223)
     plt.plot(dgalfit['Q_SERSIC'], dfull['SERSICFIT'][:,3]-dgalfit['Q_SERSIC'], 'r.', label='full')
-    plt.plot(dgalfit['Q_SERSIC'], dtrunc['SERSICFIT'][:,3]-dgalfit['Q_SERSIC'], 'bx', label='trunc')
+    #plt.plot(dgalfit['Q_SERSIC'], dtrunc['SERSICFIT'][:,3]-dgalfit['Q_SERSIC'], 'bx', label='trunc')
     plt.xlabel('galfit q')
     plt.ylabel('cnl-galfit q')
     plt.subplot(224)
     plt.plot(dgalfit['MAG_SERSIC'],
              mag([totalflux(dd) for dd in dfull['SERSICFIT']])-
              dgalfit['MAG_SERSIC'], 'r.', label='full')
-    plt.plot(dgalfit['MAG_SERSIC'],
-             mag([totalflux(dd) for dd in dtrunc['SERSICFIT']])-
-             dgalfit['MAG_SERSIC'], 'bx', label='trunc')
+    #plt.plot(dgalfit['MAG_SERSIC'],
+    #         mag([totalflux(dd) for dd in dtrunc['SERSICFIT']])-
+    #         dgalfit['MAG_SERSIC'], 'bx', label='trunc')
     plt.xlabel('galfit mag')
     plt.ylabel('cnl-galfit mag')
     plt.savefig('ser_comp.png')
-    sys.exit(0)
     #
     #two component fits
     plt.clf()
     plt.subplot(231)
     plt.xlabel('galfit re')
     plt.ylabel('cnl 2comp re - galfit re')
-    plt.plot(dgalfit['RE_SERSIC'], dfull['REFF_DSERSIC']-dgalfit['RE_SERSIC'], 'ms', label='full')
+    plt.plot(dgalfit['RE_SERSIC'], dfull['REFF_DDVC']-dgalfit['RE_SERSIC'], 'ms', label='full')
     plt.subplot(232)
     plt.xlabel('galfit re')
     plt.ylabel('cnl 2comp re  / galfit re')
-    plt.plot(dgalfit['RE_SERSIC'], dfull['DSERSICFIT'][:,9]/dgalfit['RE_SERSIC'], 'r.', label='re1')
-    plt.plot(dgalfit['RE_SERSIC'], dfull['DSERSICFIT'][:,1]/dgalfit['RE_SERSIC'], 'bx', label='re2')
+    plt.plot(dgalfit['RE_SERSIC'], dfull['DDVCFIT'][:,9]/dgalfit['RE_SERSIC'], 'r.', label='re1')
+    plt.plot(dgalfit['RE_SERSIC'], dfull['DDVCFIT'][:,1]/dgalfit['RE_SERSIC'], 'bx', label='re2')
     plt.yscale('log')
     plt.subplot(233)
     plt.xlabel('cnl B/T flux')
     plt.ylabel('re ratio')
-    plt.plot(dfull['FLUX_RATIO_DSERSIC'], dfull['DSERSICFIT'][:,9]/dgalfit['RE_SERSIC'], 'r.')
-    plt.plot(dfull['FLUX_RATIO_DSERSIC'], dfull['DSERSICFIT'][:,1]/dgalfit['RE_SERSIC'], 'bx')
+    plt.plot(dfull['FLUX_RATIO_DDVC'], dfull['DDVCFIT'][:,9]/dgalfit['RE_SERSIC'], 'r.')
+    plt.plot(dfull['FLUX_RATIO_DDVC'], dfull['DDVCFIT'][:,1]/dgalfit['RE_SERSIC'], 'bx')
     plt.yscale('log')
     plt.hlines(1,0,1)
     plt.subplot(234)
-    plt.plot(dgalfit['N_SERSIC'], dfull['DSERSICFIT'][:,2], 'bx')
-    plt.plot(dgalfit['N_SERSIC'], dfull['DSERSICFIT'][:,10], 'r.')
+    plt.plot(dgalfit['N_SERSIC'], dfull['SERSICFIT'][:,2], 'bx')
+    plt.plot(dgalfit['N_SERSIC'], dfull['EXPSERSICFIT'][:,10], 'r.')
     plt.plot([0,9], [0,9], 'k-')
     plt.xlabel('galfit n')
     plt.ylabel('cnl n')
     plt.subplot(235)
     plt.xlabel('galfit mag')
     plt.ylabel('cnl mag - galfit mag')
-    plt.plot(dfull['FLUX_RATIO_DSERSIC'], #dgalfit['MAG_SERSIC'],
+    plt.plot(dfull['FLUX_RATIO_DDVC'], #dgalfit['MAG_SERSIC'],
              mag([totalflux(dd[:8])+totalflux(dd[8:])
-                 for dd in dfull['DSERSICFIT']])-
+                 for dd in dfull['DDVCFIT']])-
              dgalfit['MAG_SERSIC'], 'ms', mew=0, ms=3, label='full')
-    plt.plot(dfull['FLUX_RATIO_DSERSIC'], #galfit['MAG_SERSIC'],
+    plt.plot(dfull['FLUX_RATIO_DDVC'], #galfit['MAG_SERSIC'],
              mag([totalflux(dd[8:])
-                 for dd in dfull['DSERSICFIT']])-
+                 for dd in dfull['DDVCFIT']])-
              dgalfit['MAG_SERSIC'], 'r.', label='full')
     plt.savefig('dser_comp.png')
 

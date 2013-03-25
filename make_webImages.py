@@ -75,7 +75,7 @@ def main():
 
     #read the data
     data=pyfits.open(args[0])[1].data
-    num={'DSERSIC':0, 'BULGE':0,'DISK':1,'DVC':2,'EXP':3,'SERSIC':1}
+    num={'DSERSIC':0,'DDVC':3,'EXPSERSIC':4,'DVC':2,'SERSIC':1}
 
     model = str.upper(opts.model)
     if model not in num.keys():
@@ -93,9 +93,9 @@ def main():
             'CHISQ_%s'%model,
           #'FRACDEV', #'ZEST_TYPE',
             'MAD_SKY']
-        if model=='DSERSIC':
-            keys.append('REFF_DSERSIC')
-            keys.append('FLUX_RATIO_DSERSIC')
+        if model in ['DSERSIC', 'DDVC', 'EXPSERSIC']:
+            keys.append('REFF_'+model)
+            keys.append('FLUX_RATIO_'+model)
 
         keys.append('MAD_%s_MASK'%model)
     #keys=('IDENT','ALPHA_J2000','DELTA_J2000','CHISQ_BULGE',
@@ -108,6 +108,8 @@ def main():
         if model=='DSERSIC':
             s2 +=  "<tr><td>%s</td><td>%.2f,%.2f</td></tr>\n" % ('DSERSIC NS:', data[i]['DSERSICFIT'][2],
                                                                  data[i]['DSERSICFIT'][10])
+        if model=='EXPSERSIC':
+            s2 += "<tr><td>%s</td><td>%s</td></tr>\n" % ('EXPSERSIC N:', str(data[i]['EXPSERSICFIT'][10]))
 #    s2 +=  "<tr><td>%s</td><td>%s</td></tr>\n" % ('B/T:', str(data[i]['SERSICFIT'][2]))
         s2 += "</table>\n"
         s += "<td>%s</td>\n" % (s2)
@@ -144,7 +146,7 @@ def main():
         modelImage=modelImage[y0:y0+imY-1,x0:x0+imX-1]
 
         modelfit='%sFIT'%model
-        if model in ('DISK', 'BULGE', 'DSERSIC'):
+        if model in ('DDVC', 'EXPSERSIC', 'DSERSIC'):
             bulgereff=data[i][modelfit][9]
             bulgeq=data[i][modelfit][11]
             bulgephi=data[i][modelfit][15]
@@ -155,8 +157,8 @@ def main():
             bulgecenY=data[i][modelfit][14]
             diskcenX=data[i][modelfit][5]
             diskcenY=data[i][modelfit][6]
-            btt={'BULGE':1.0,
-                 'DISK':0.0,
+            btt={'DDVC':data[i]['FLUX_RATIO_DDVC'],
+                 'EXPSERSIC':data[i]['FLUX_RATIO_EXPSERSIC'],
                 'DSERSIC':data[i]['FLUX_RATIO_DSERSIC']}[model]
         else:
             bulgereff=data[i][modelfit][1]
