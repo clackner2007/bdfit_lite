@@ -19,6 +19,7 @@ import matplotlib.figure as figure
 from matplotlib.patches import Ellipse
 import pyfits
 from scipy.stats import scoreatpercentile
+from ProfilePlots import getProfile
 
 ##plot stylized model
 def plot_mini_model(ax,
@@ -140,9 +141,10 @@ def main():
 #    imY = np.max(yy[ivarImage > 1.e-13]) - y0
 #    del xx, yy
 
-        showImage = realImage #copy.copy(realImage)
+        showImage = copy.copy(realImage)
 #    showImage[np.abs(ivarImage) < 1.e-13] = 0.0
         showImage=showImage[y0:y0+imY-1,x0:x0+imX-1]
+        origImage = copy.copy(modelImage)
         modelImage=modelImage[y0:y0+imY-1,x0:x0+imX-1]
 
         modelfit='%sFIT'%model
@@ -207,7 +209,27 @@ def main():
             bulgecenX-x0, bulgecenY-y0,
             diskcenX-x0, diskcenY-y0,
             imX, imY, btt)
-        #ax4=fig.add_subplot(144)
+        ax4=fig.add_subplot(144)
+        realImage=np.asarray(realImage, dtype=np.float64)
+        origImage=np.asarray(origImage, dtype=np.float64)
+        improf = getProfile(realImage, data[i]['SERSICFIT'][1],
+                            data[i]['SERSICFIT'][3],
+                            data[i]['SERSICFIT'][7],
+                            data[i]['SERSICFIT'][5],
+                            data[i]['SERSICFIT'][6])
+        modprof = getProfile(origImage, data[i]['SERSICFIT'][1],
+                             data[i]['SERSICFIT'][3],
+                             data[i]['SERSICFIT'][7],
+                             data[i]['SERSICFIT'][5],
+                             data[i]['SERSICFIT'][6])
+        ax4.errorbar(improf.rad, improf.mnflux,
+                     yerr=improf.stdflux,
+                     fmt='o', mec='k', c='k')
+        ax4.plot(modprof.rad, modprof.mnflux, marker='None', 
+                 c='g', ls='solid')
+        ax4.tick_params(labelright='on', labelleft='off',
+                       labelbottom='on', labelsize='xx-small')
+        ax4.set_yscale('log')
         #ax4.imshow(np.arcsinh(psfImage),aspect='equal')
         #ax4.tick_params(labelleft='off',labelbottom='off',labelright='on',
         #    labelsize='xx-small')
