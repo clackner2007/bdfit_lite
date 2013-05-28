@@ -36,8 +36,8 @@ print SUB "#PBS -o pbs/\${PBS_JOBNAME}.out\n".
 print SUB ". /home/clackner/.idlenv\n";
 print SUB "env\n\n";
 print SUB "type idl\n";
-printf SUB "echo \"bulge_atlassample, \'%s\', \${PBS_ARRAYID}, \$((\${PBS_ARRAYID}+$numperJob)), \'%s\', \'%s\'\"\n", $inputfile, $outputfile, $imagepath;
-printf SUB "echo \"bulge_atlassample, \'%s\', \${PBS_ARRAYID}, \$((\${PBS_ARRAYID}+$numperJob)), \'%s\', \'%s\'\" | idl\n", $inputfile, $outputfile, $imagepath;
+printf SUB "echo \"bulge_atlassample, \'%s\', \${PBS_ARRAYID}, \$((\${PBS_ARRAYID}+$numperJob)), \'%s\', \'%s\', /residuals\"\n", $inputfile, $outputfile, $imagepath;
+printf SUB "echo \"bulge_atlassample, \'%s\', \${PBS_ARRAYID}, \$((\${PBS_ARRAYID}+$numperJob)), \'%s\', \'%s\', /residuals\" | idl\n", $inputfile, $outputfile, $imagepath;
 
 close( SUB );
 
