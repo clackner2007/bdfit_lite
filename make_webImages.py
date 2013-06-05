@@ -87,7 +87,7 @@ def main():
     s += "<body>\n"
     s += "<table border=\"1\">\n"
 
-    for i in range(min(50,len(data))):
+    for i in range(len(data)): #range(min(50,len(data))):
         s += "<tr>\n"
         s2 = "<table>\n"
         keys=['IDENT',#'ALPHA_J2000','DELTA_J2000',
