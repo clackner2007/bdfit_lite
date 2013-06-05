@@ -38,8 +38,10 @@ def main():
     #make output files for each type of fit
     outcols = ['IDENT', 'R_INNER', 'N_INNER', 'R_OUTER', 'N_OUTER',
                'INNER_FLUX_FRAC', 'R_TOT', 'STATUS', 'Q_INNER',
-               'Q_OUTER', 'Q_TOT']
-    outtype = ['J', 'D', 'D', 'D', 'D', 'D', 'D', 'J', 'D', 'D', 'D']
+               'Q_OUTER', 'Q_TOT', 'R_INNER_ERR', 'R_OUTER_ERR', 
+               'R_TOT_ERR']
+    outtype = ['J', 'D', 'D', 'D', 'D', 'D', 'D', 'J', 'D', 'D', 'D',
+               'D', 'D', 'D']
     
 
     outfiles = ['sersic', 'dblsersic', 'dbldvc', 'expsersic']
@@ -54,6 +56,7 @@ def main():
 
         if name=='SERSIC':
             newtab.data.field('R_INNER')[:] = data[name+'FIT'][:,1]
+            newtab.data.field('R_INNER_ERR')[:] = data['PERR_'+name][:,1]
             newtab.data.field('Q_INNER')[:] = data[name+'FIT'][:,3]
             newtab.data.field('N_INNER')[:] = data[name+'FIT'][:,2]
             newtab.data.field('INNER_FLUX_FRAC')[:] = 1.0
@@ -61,13 +64,20 @@ def main():
 
         else:
             newtab.data.field('R_INNER')[:] = data[name+'FIT'][:,1+8]
+            newtab.data.field('R_INNER_ERR')[:] = data['PERR_'+name][:,1+8]
             newtab.data.field('Q_INNER')[:] = data[name+'FIT'][:,3+8]
             newtab.data.field('N_INNER')[:] = data[name+'FIT'][:,2+8]
             newtab.data.field('R_OUTER')[:] = data[name+'FIT'][:,1]
+            newtab.data.field('R_OUTER_ERR')[:] = data['PERR_'+name][:,1]
             newtab.data.field('Q_OUTER')[:] = data[name+'FIT'][:,3]
             newtab.data.field('N_OUTER')[:] = data[name+'FIT'][:,2]
             newtab.data.field('INNER_FLUX_FRAC')[:] = data['FLUX_RATIO_'+name]
             newtab.data.field('R_TOT')[:] = data['REFF_'+name]
+            newtab.data.field('R_TOT_ERR')[:] = np.sqrt(\
+                data['FLUX_RATIO_'+name]**2 *data['PERR_'+name][:,1+8]**2 + \
+                (1-data['FLUX_RATIO_'+name])**2*data['PERR_'+name][:,1]**2 + \
+                 data['FLUX_RATIO_'+name]*(1-data['FLUX_RATIO_'+name])* \
+                 data['COVAR_'+name][:,1+(9*16)])
 
         newtab.data.field('Q_TOT')[:] = data['SERSICFIT'][:,2]
                 
