@@ -47,8 +47,9 @@ dist_ellipse, ellp, [nx,ny], x0, y0, 1.0/q, phi*180.0/!pi-90.0
 
 ;bisection
 while( flux_diff(guess[0]) gt 0.0 ) do guess[0] *= 0.7
-while( flux_diff(guess[1]) lt 0.0 ) do guess[1] *= 1.5
-result_rad = bisection('flux_diff', guess[0], guess[1], precision=0.01)
+while( (guess[1] lt nx) and (flux_diff(guess[1]) lt 0.0) ) do guess[1] *= 1.5
+result_rad = bisection('flux_diff', guess[0], guess[1], precision=0.01, $
+                      maxiter=100)
 
 return, result_rad
 
