@@ -260,7 +260,7 @@ while( again ne 0 and times lt 5 ) do begin
                                  psfImage:data.psf, $
                                  cutoff:1, rescale:rescale}, $
                       perror=errors, covar=covar, weights=data.ivar,$
-                      dof=dof, bestnorm=bn, /quiet, $
+                      dof=dof, bestnorm=bn, $ ;/quiet, $
                       xtol=1.0e-10, gtol=1.0e-8, ftol=1.0e-6, $
                       status=fitstat, maxiter=200, npegged=npg);, $
                       ;iterproc='iter_plot', ITERARGS={psf:data.psf}, yfit=fit)
@@ -322,7 +322,7 @@ while( again ne 0 and times lt 5 ) do begin
     endif 
     ;make q <=1 for disk and bulge
     if( (params[3] gt 1.0) and abs(params[0]) gt 1.0e-18 $
-        and (params[1] gt 1.0e-12)) then begin
+        and (params[1] gt 1.0e-12) ) then begin
         params[3] = 1.0/params[3]
         params[phi_ind] += !pi*0.5
         params[1] /= params[3]
@@ -330,7 +330,10 @@ while( again ne 0 and times lt 5 ) do begin
            params[9] *= params[3]
         if (again eq 1) then $
           params[3] = max([params[3], 1.1*parinfo[3].limits[0]])
-        ;again  = 0
+        if (params[1] ge parinfo[1].limits[1]) then begin
+           params[1] = start_params[1]*(1-0.2*times)
+           again = 1
+        endif
     endif 
     if( nparams ge 16 ) then begin
         if( params[11] gt 1.0  and abs(params[9]) gt 1.0e-18 $
@@ -344,10 +347,14 @@ while( again ne 0 and times lt 5 ) do begin
             endif
             if (again eq 1) then $
               params[11] = max([params[11], 1.1*parinfo[11].limits[0]])
-            ;again  = 0
+            if (params[9] ge parinfo[9].limits[1]) then begin
+               params[9] = start_params[9]*(1-0.2*times)
+               again = 1
+            endif 
+                  
         endif
         params[15] = params[15] mod !pi
-    endif
+     endif 
     
     ;if the fit didn't work, try again
     if( fitstat eq 5 ) then begin
