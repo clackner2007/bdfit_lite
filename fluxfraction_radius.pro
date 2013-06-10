@@ -20,7 +20,8 @@ flux=dblarr(n_elements(rad))
 for i=0L,n_elements(rad)-1 do begin
     flux[i] = total(im*(ellipse le rad[i]))
 end
-
+;print, flux
+;print, enc_flux
 return, flux - enc_flux
 
 END

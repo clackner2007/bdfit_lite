@@ -217,7 +217,7 @@ for i=0L, n_elements(gals)-1L do begin
                   /free_sky, diskSersic=4.0D, $
                   _EXTRA={Reff:params[1]*4.0, q:params[3], phi:params[7], $
                           fracdev:0.1}
-    output[i].MPFIT_STATUS[0] = stat
+    output[i].MPFIT_STATUS[4] = stat
     output[i].SKY_DDVC = sky
     output[i].SKY_DDVC_ERR = errds[16]
     output[i].SKY_DDVC_COVAR = covards[16,0:16]
@@ -239,7 +239,7 @@ for i=0L, n_elements(gals)-1L do begin
                   /free_sky, diskSersic=1.0D, /freebulge, $
                   _EXTRA={Reff:params[1]*4.0, q:params[3], phi:params[7], $
                           fracdev:0.2}
-    output[i].MPFIT_STATUS[0] = stat
+    output[i].MPFIT_STATUS[3] = stat
     output[i].SKY_EXPSERSIC = sky
     output[i].SKY_EXPSERSIC_ERR = errds[16]
     output[i].SKY_EXPSERSIC_COVAR = covards[16,0:16]
@@ -255,7 +255,7 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].FLUX_RATIO_EXPSERSIC = bulgetotot(output[i].EXPSERSICFIT, /cutoff)
 
     print, 'timed: ',systime(1)-t1
-
+    ;mwrfits, output, 'temp.fits', /create
 
     keep = where(origdata.mask,complement=notkeep)
     output[i].MAD_SKY = median(abs(origdata.image[notkeep]))
