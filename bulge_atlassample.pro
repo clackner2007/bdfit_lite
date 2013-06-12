@@ -216,7 +216,7 @@ for i=0L, n_elements(gals)-1L do begin
                   chsqds, covards, errds, stat, dofds, sky, bulgeSersic=4.0D, $
                   /free_sky, diskSersic=4.0D, $
                   _EXTRA={Reff:max([params[1]*4.0, $
-                                    sqrt(imsize[0]*imsize[1])*0.8]),$
+                                    sqrt(imsize[0]*imsize[1]*1.0)*0.8]),$
                           q:params[3], phi:params[7], $
                           fracdev:0.1}
     output[i].MPFIT_STATUS[4] = stat
