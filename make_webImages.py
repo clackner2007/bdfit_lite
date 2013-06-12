@@ -14,6 +14,7 @@ import os
 import re, copy
 import optparse
 import numpy as np
+import matplotlib.cm
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigCanvas
 import matplotlib.figure as figure
 from matplotlib.patches import Ellipse
@@ -119,12 +120,10 @@ def main():
         try:
             realImage = pyfits.open(args[1]+'images/{0}.fits'. \
                     format(data.FILENAME[i]))[0].data
-            #ivarImage = pyfits.open(args[1]+'ivar/{0}.0_{1:f}_{2:f}.wht.mask.fits'.\
-            #        format(data.IDENT[i],data.ALPHA_J2000[i],data.DELTA_J2000[i]))[0].data
-            #psfImage = pyfits.open(args[1]+'psf/{0}.0_{1:f}_{2:f}.psf.fits.gz'.\
-            #       format(data.IDENT[i],data.ALPHA_J2000[i],data.DELTA_J2000[i]))[0].data
             modelImage = pyfits.open(args[2]+'M{0:09d}.fits'.\
                      format(int(data.IDENT[i])))[num[model]].data
+            maskImage = pyfits.open(args[1]+'masks/{0}_mask.fits'.
+                                    format(int(data.IDENT[i])))[0].data
         except IOError:
             s+= "<td>couldn't open image files for "+repr(data.IDENT[i])+"</td>\n</tr>\n"
             continue
@@ -134,17 +133,19 @@ def main():
         y0 = data[i]['YCROP']
         imX = data[i]['XLEN']
         imY = data[i]['YLEN']
-#    xx, yy = np.meshgrid(range(imX), range(imY))
-#    x0 = np.min(xx[ivarImage > 1.e-13])
-#    y0 = np.min(yy[ivarImage > 1.e-13])
-#    imX = np.max(xx[ivarImage > 1.e-13]) - x0
-#    imY = np.max(yy[ivarImage > 1.e-13]) - y0
-#    del xx, yy
+        rs=3
+        offset = min(data[i]['SERSICFIT'][1]*rs, 300)
+        x0 = max(data[i]['SERSICFIT'][5] - offset, x0)
+        y0 = max(data[i]['SERSICFIT'][6] - offset, y0)
+        imX = min(imX, data[i]['SERSICFIT'][5] + offset - x0)
+        imY = min(imY, data[i]['SERSICFIT'][6] + offset - y0)
 
+        realImage[maskImage==1] = -1000
         showImage = copy.copy(realImage)
 #    showImage[np.abs(ivarImage) < 1.e-13] = 0.0
         showImage=showImage[y0:y0+imY-1,x0:x0+imX-1]
         origImage = copy.copy(modelImage)
+        modelImage[maskImage==1] = -1000
         modelImage=modelImage[y0:y0+imY-1,x0:x0+imX-1]
 
         modelfit='%sFIT'%model
@@ -194,14 +195,21 @@ def main():
 
         ax1=fig.add_subplot(141,frameon=True)
         ax1.imshow((np.arcsinh(showImage)),aspect='equal',
-                   vmin=np.amin(np.arcsinh(showImage)),
+                   interpolation='none',
+                   vmin=scoreatpercentile(np.arcsinh(showImage[showImage>-999].
+                                                     flatten()), 5),
                    vmax=scoreatpercentile(np.arcsinh(showImage).flatten(),99.9))
         ax1.tick_params(labelsize='xx-small')
 
-        ax2=fig.add_subplot(142)
-        ax2.imshow((showImage-modelImage),aspect='equal')
+        ax2=fig.add_subplot(142, sharex=ax1, sharey=ax1)
+        diff = (showImage-modelImage)
+        diff[modelImage==0] = 0
+        ax2.imshow(diff, aspect='equal',
+                   interpolation='none',
+                   vmin=scoreatpercentile(diff.flatten(), 0.5),
+                   vmax=scoreatpercentile(diff.flatten(), 99.5))
         ax2.tick_params(labelleft='off',labelbottom='off')
-        ax3=fig.add_subplot(143)
+        ax3=fig.add_subplot(143, sharex=ax1, sharey=ax1)
         plot_mini_model(ax3,
             bulgereff,diskreff,
             bulgephi,diskphi,
@@ -212,24 +220,35 @@ def main():
         ax4=fig.add_subplot(144)
         realImage=np.asarray(realImage, dtype=np.float64)
         origImage=np.asarray(origImage, dtype=np.float64)
-        improf = getProfile(realImage, data[i]['SERSICFIT'][1],
-                            data[i]['SERSICFIT'][3],
-                            data[i]['SERSICFIT'][7],
-                            data[i]['SERSICFIT'][5],
-                            data[i]['SERSICFIT'][6])
-        modprof = getProfile(origImage, data[i]['SERSICFIT'][1],
-                             data[i]['SERSICFIT'][3],
-                             data[i]['SERSICFIT'][7],
-                             data[i]['SERSICFIT'][5],
-                             data[i]['SERSICFIT'][6])
-        ax4.errorbar(improf.rad, improf.mnflux,
-                     yerr=improf.stdflux,
-                     fmt='o', mec='k', c='k')
-        ax4.plot(modprof.rad, modprof.mnflux, marker='None', 
-                 c='g', ls='solid')
-        ax4.tick_params(labelright='on', labelleft='off',
-                       labelbottom='on', labelsize='xx-small')
-        ax4.set_yscale('log')
+        realImage[maskImage==1] = -1000
+
+        ax4.imshow(np.arcsinh(realImage),aspect='equal', 
+                   interpolation='none',
+                   vmin=scoreatpercentile(np.arcsinh(realImage
+                                                     [realImage > 
+                                                      -999]).flatten(), 0.1),
+                   vmax=scoreatpercentile(np.arcsinh(showImage).flatten(),
+                                          99.9))
+        ax4.tick_params(labelsize='xx-small', labelleft='off', labelright='on')
+
+        #improf = getProfile(realImage, data[i]['SERSICFIT'][1],
+        #                    data[i]['SERSICFIT'][3],
+        #                    data[i]['SERSICFIT'][7],
+        #                    data[i]['SERSICFIT'][5],
+        #                    data[i]['SERSICFIT'][6])
+        #modprof = getProfile(origImage, data[i]['SERSICFIT'][1],
+        #                     data[i]['SERSICFIT'][3],
+        #                     data[i]['SERSICFIT'][7],
+        #                     data[i]['SERSICFIT'][5],
+        #                     data[i]['SERSICFIT'][6])
+        #ax4.errorbar(improf.rad, improf.mnflux,
+        #             yerr=improf.stdflux,
+        #             fmt='o', mec='k', c='k')
+        #ax4.plot(modprof.rad, modprof.mnflux, marker='None', 
+        #         c='g', ls='solid')
+        #ax4.tick_params(labelright='on', labelleft='off',
+        #               labelbottom='on', labelsize='xx-small')
+        #ax4.set_yscale('log')
         #ax4.imshow(np.arcsinh(psfImage),aspect='equal')
         #ax4.tick_params(labelleft='off',labelbottom='off',labelright='on',
         #    labelsize='xx-small')

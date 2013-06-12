@@ -61,6 +61,7 @@ def main():
             newtab.data.field('N_INNER')[:] = data[name+'FIT'][:,2]
             newtab.data.field('INNER_FLUX_FRAC')[:] = 1.0
             newtab.data.field('R_TOT')[:] = newtab.data.field('R_INNER')
+            newtab.data.field('R_TOT_ERR')[:] = data['PERR_'+name][:,1]
 
         else:
             newtab.data.field('R_INNER')[:] = data[name+'FIT'][:,1+8]
