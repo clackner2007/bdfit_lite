@@ -14,6 +14,7 @@ import sys, os, re
 import argparse
 import numpy as np
 import pyfits
+import scipy.special
 
 def makeCols(names, types, length):
     zeros={'J':int, 'D':float}
@@ -33,9 +34,25 @@ def totalflux(a0, r0, n, q, cutoff=True):
     if not cutoff:
         return flux
     else:
-        #wrong for everything but deVauc.
-        flux *= 0.933666
-    
+        factor = np.ones_like(flux)
+        print len(flux)
+        small = (n-1 < 1.e-5)
+        print len(small)
+        ns = n[small]
+        factor[small] = 0.98042454 - 0.06495062*(ns-1.) - \
+            0.02627548*(ns-1.)**2 + 0.02277057*(ns-1.)**3 - \
+            0.21949023*(ns-1)**4 - 0.34741306*(ns-1.)**5 
+        
+        large = ~small
+        nl = n[large]
+        factor[large] = 0.936587 - 2.7233496e-2*(nl-4.) + \
+            1.4125945e-3*(nl-4.)**2 + 4.06329317e-4*(nl-4.)**3 - \
+            1.82907176e-4*(nl-4.)**4 +2.2355412e-5*(nl-4.)**5
+        if (np.abs(n-1) < 1.0e-5).any():
+            factor[np.abs(n-1) < 1.0e-5] = 0.980472
+        if (np.abs(n-4) < 1.0e-5).any():
+            factor[np.abs(n-4) < 1.0e-5] = 0.933666        
+        return flux*factor
 
 
 def main():
@@ -51,19 +68,21 @@ def main():
     outcols = ['IDENT', 'R_INNER', 'N_INNER', 'R_OUTER', 'N_OUTER',
                'INNER_FLUX_FRAC', 'R_TOT', 'STATUS', 'Q_INNER',
                'Q_OUTER', 'Q_TOT', 'R_INNER_ERR', 'R_OUTER_ERR', 
-               'R_TOT_ERR', 'TOTAL_FLUX']
+               'R_TOT_ERR', 'TOTAL_FLUX', 'MAD_RATIO', 'RED_CHI2',
+               'I0_INNER', 'I0_OUTER']
     outtype = ['J', 'D', 'D', 'D', 'D', 'D', 'D', 'J', 'D', 'D', 'D',
-               'D', 'D', 'D', 'D']
+               'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D']
     
 
     outfiles = ['sersic', 'dblsersic', 'dbldvc', 'expsersic', 'dvc']
     innames = ['SERSIC', 'DSERSIC', 'DDVC', 'EXPSERSIC', 'DVC']
+    innums = [1, 0, 4, 3, 2]
     
     nentry = len(data)
     
     for n, name in enumerate(innames):
         newtab = makeCols(outcols, outtype, nentry)
-        print len(data['IDENT']), len(newtab.data['IDENT'])
+        #print len(data['IDENT']), len(newtab.data['IDENT'])
         newtab.data.field('IDENT')[:] = data['IDENT']
 
         if (name=='SERSIC') or (name=='DVC'):
@@ -74,11 +93,16 @@ def main():
             newtab.data.field('INNER_FLUX_FRAC')[:] = 1.0
             newtab.data.field('R_TOT')[:] = newtab.data.field('R_INNER')
             newtab.data.field('R_TOT_ERR')[:] = data['PERR_'+name][:,1]
+            newtab.data.field('I0_INNER')[:] = (data[name+'FIT'][:,0]*
+                                                np.exp(data[name+'FIT'][:,2]*
+                                                       np.exp(0.6950-0.1789/
+                                                              data[name+'FIT'][:,2])))
             newtab.data.field('TOTAL_FLUX')[:] \
                 = totalflux(data[name+'FIT'][:,0], 
                             data[name+'FIT'][:,1],
                             data[name+'FIT'][:,2],
                             data[name+'FIT'][:,3])
+
         else:
             newtab.data.field('R_INNER')[:] = data[name+'FIT'][:,1+8]
             newtab.data.field('R_INNER_ERR')[:] = data['PERR_'+name][:,1+8]
@@ -90,24 +114,30 @@ def main():
             newtab.data.field('N_OUTER')[:] = data[name+'FIT'][:,2]
             newtab.data.field('INNER_FLUX_FRAC')[:] = data['FLUX_RATIO_'+name]
             newtab.data.field('R_TOT')[:] = data['REFF_'+name]
-            newtab.data.field('R_TOT_ERR')[:] = np.sqrt(\
-                data['FLUX_RATIO_'+name]**2 *data['PERR_'+name][:,1+8]**2 + \
-                (1-data['FLUX_RATIO_'+name])**2*data['PERR_'+name][:,1]**2 + \
-                 data['FLUX_RATIO_'+name]*(1-data['FLUX_RATIO_'+name])* \
-                 data['COVAR_'+name][:,1+(9*16)])
+            newtab.data.field('R_TOT_ERR')[:] = np.sqrt(
+                data['FLUX_RATIO_'+name]**2 *data['PERR_'+name][:,1+8]**2 + 
+                (1-data['FLUX_RATIO_'+name])**2*data['PERR_'+name][:,1]**2 + 
+                data['FLUX_RATIO_'+name]*(1-data['FLUX_RATIO_'+name])* 
+                data['COVAR_'+name][:,1+(9*16)])
             newtab.data.field('TOTAL_FLUX')[:] \
-                = totalflux(data[name+'FIT'][:,0], 
-                            data[name+'FIT'][:,1],
-                            data[name+'FIT'][:,2],
-                            data[name+'FIT'][:,3]) + \
-                            totalflux(data[name+'FIT'][:,0+8], 
-                                      data[name+'FIT'][:,1+8],
-                                      data[name+'FIT'][:,2+8],
-                                      data[name+'FIT'][:,3+8])
-                            
+                = (totalflux(data[name+'FIT'][:,0], 
+                             data[name+'FIT'][:,1],
+                             data[name+'FIT'][:,2],
+                             data[name+'FIT'][:,3]) + 
+                   totalflux(data[name+'FIT'][:,0+8], 
+                             data[name+'FIT'][:,1+8],
+                             data[name+'FIT'][:,2+8],
+                             data[name+'FIT'][:,3+8]))
+            newtab.data.field('I0_OUTER')[:] = data[name+'FIT'][:,0]*\
+                np.exp(data[name+'FIT'][:,2]*np.exp(0.6950-0.1789/
+                                                    data[name+'FIT'][:,2]))
+            newtab.data.field('I0_INNER')[:] = data[name+'FIT'][:,0+8]*\
+                np.exp(data[name+'FIT'][:,2+8]*np.exp(0.6950-0.1789/
+                                                      data[name+'FIT'][:,2+8]))
 
         newtab.data.field('Q_TOT')[:] = data['SERSICFIT'][:,3]
-                
+        newtab.data.field('MAD_RATIO')[:] = data['MAD_'+name+'_MASK'][:,]/data['MAD_SKY']
+        newtab.data.field('RED_CHI2')[:] = data['CHISQ_'+name]
         newtab.writeto(outfiles[n]+'.fits', clobber=True)
 
     for i in range(len(data.names)):
