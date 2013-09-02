@@ -122,7 +122,7 @@ def main():
                     format(data.FILENAME[i]))[0].data
             modelImage = pyfits.open(args[2]+'M{0:09d}.fits'.\
                      format(int(data.IDENT[i])))[num[model]].data
-            maskImage = pyfits.open(args[1]+'masks/{0}_mask.fits'.
+            maskImage = pyfits.open(args[1]+'new_masks/{0}_mask.fits'.
                                     format(int(data.IDENT[i])))[0].data
         except IOError:
             s+= "<td>couldn't open image files for "+repr(data.IDENT[i])+"</td>\n</tr>\n"
