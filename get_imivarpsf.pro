@@ -32,8 +32,8 @@ if file_test(rootpath+'new_masks/'+$
 endif
 im = mrdfits(rootpath+'images/'+name+'.fits', 0)
 ivar0 = mrdfits(rootpath+'ivar/'+name+'.wht.fits',0)
-ivarMask = mrdfits(rootpath+'masks/'+string(id, format='(i0)')+'_mask.fits', 0)
-mymask = mrdfits(rootpath+"masks/"+string(id, format='(i0)')+'_seg.fits', 0)
+ivarMask = mrdfits(rootpath+'new_masks/'+string(id, format='(i0)')+'_mask.fits', 0)
+mymask = mrdfits(rootpath+"new_masks/"+string(id, format='(i0)')+'_seg.fits', 0)
 
 ;temporarily change psf to random psf from list:
 ;idpath = string(14292, 149.543219D, 2.152322D, $
