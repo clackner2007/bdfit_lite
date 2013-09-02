@@ -136,8 +136,9 @@ def main():
                                                       data[name+'FIT'][:,2+8]))
 
         newtab.data.field('Q_TOT')[:] = data['SERSICFIT'][:,3]
-        newtab.data.field('MAD_RATIO')[:] = data['MAD_'+name+'_MASK'][:,]/data['MAD_SKY']
+        newtab.data.field('MAD_RATIO')[:] = (data['MAD_'+name+'_MASK'][:]/data['MAD_SKY'][:])
         newtab.data.field('RED_CHI2')[:] = data['CHISQ_'+name]
+        newtab.data.field('STATUS')[:] = data['MPFIT_STATUS'][:,innums[n]]
         newtab.writeto(outfiles[n]+'.fits', clobber=True)
 
     for i in range(len(data.names)):
