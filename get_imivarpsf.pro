@@ -24,7 +24,7 @@ if file_test(rootpath+'ivar/'+name+'.wht.fits') eq 0 then begin
     return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
  endif
 
-if file_test(rootpath+'new_masks/'+$
+if file_test(rootpath+'masks_all/'+$
              string(id, format='(i0)')+'_mask.fits') eq 0 then begin
     print, "couldn't find file "+$
            rootpath+string(id, format='(i0)')+'_mask.fits for '+name
@@ -32,8 +32,8 @@ if file_test(rootpath+'new_masks/'+$
 endif
 im = mrdfits(rootpath+'images/'+name+'.fits', 0)
 ivar0 = mrdfits(rootpath+'ivar/'+name+'.wht.fits',0)
-ivarMask = mrdfits(rootpath+'new_masks/'+string(id, format='(i0)')+'_mask.fits', 0)
-mymask = mrdfits(rootpath+"new_masks/"+string(id, format='(i0)')+'_seg.fits', 0)
+ivarMask = mrdfits(rootpath+'masks_all/'+string(id, format='(i0)')+'_mask.fits', 0)
+mymask = mrdfits(rootpath+"masks_all/"+string(id, format='(i0)')+'_seg.fits', 0)
 
 ;temporarily change psf to random psf from list:
 ;idpath = string(14292, 149.543219D, 2.152322D, $
