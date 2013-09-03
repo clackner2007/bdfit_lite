@@ -125,8 +125,8 @@ if( keyword_set(_EXTRA) ) then begin
             parinfo[1].value = _EXTRA.Reff
             if(not keyword_set(nodisk)) then begin
                if rescale eq 0 then $
-                  parinfo[9].value = _EXTRA.Reff $
-               else parinfo[9].value = 0.8
+                  parinfo[9].value = _EXTRA.Reff*0.5 $
+               else parinfo[9].value = 0.5
                 frac=0.5
                 if tag_exist(_EXTRA,"fracdev") then begin
                     frac=(0.10)+_EXTRA.fracdev*0.8
