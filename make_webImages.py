@@ -63,6 +63,9 @@ def plot_mini_model(ax,
 
 def main():
     parser = optparse.OptionParser(usage=__doc__)
+    parser.add_option('-n', '--new', help='use with new output',
+                      dest='new', action='store_true',
+                      default=False)
     parser.add_option('-m', '--model',
                       help='model to use, bulge, disk, exp, dvc, or sersic',
                       dest='model', default='sersic')
@@ -77,11 +80,16 @@ def main():
 
     #read the data
     data=pyfits.open(args[0])[1].data
-    num={'DSERSIC':0,'DDVC':3,'EXPSERSIC':4,'DVC':2,'SERSIC':1}
+    num={'DSERSIC':0,'DDVC':1 if opts.new else 3,
+         'EXPSERSIC':4,'DVC':2,'SERSIC':1,
+         'DVCEXP':2, 'DVCSERSIC':0}
 
     model = str.upper(opts.model)
     if model not in num.keys():
-        model='SERSIC'
+        if opts.new():
+            model='DVCEXP'
+        else:
+            model='SERSIC'
 
     #write the n_b=4 b+d page
     s  = "<html>\n"
@@ -95,7 +103,7 @@ def main():
             'CHISQ_%s'%model,
           #'FRACDEV', #'ZEST_TYPE',
             'MAD_SKY']
-        if model in ['DSERSIC', 'DDVC', 'EXPSERSIC']:
+        if model in ['DSERSIC', 'DDVC', 'EXPSERSIC', 'DVCEXP', 'DVCSERSIC']:
             keys.append('REFF_'+model)
             keys.append('FLUX_RATIO_'+model)
 
@@ -106,12 +114,15 @@ def main():
             v = data[i][k]
             s2 +=  "<tr><td>%s:</td><td>%s</td></tr>\n" % (k, str(v))
 
-        s2 +=  "<tr><td>%s</td><td>%s</td></tr>\n" % ('SERSIC N:', str(data[i]['SERSICFIT'][2]))
+        if not opts.new:
+            s2 +=  "<tr><td>%s</td><td>%s</td></tr>\n" % ('SERSIC N:', str(data[i]['SERSICFIT'][2]))
         if model=='DSERSIC':
             s2 +=  "<tr><td>%s</td><td>%.2f,%.2f</td></tr>\n" % ('DSERSIC NS:', data[i]['DSERSICFIT'][2],
                                                                  data[i]['DSERSICFIT'][10])
         if model=='EXPSERSIC':
             s2 += "<tr><td>%s</td><td>%s</td></tr>\n" % ('EXPSERSIC N:', str(data[i]['EXPSERSICFIT'][10]))
+        if model=='DVCSERSIC':
+            s2 += "<tr><td>%s</td><td>%s</td></tr>\n" % ('DVCSERSIC N:', str(data[i]['DVCSERSICFIT'][2]))
 #    s2 +=  "<tr><td>%s</td><td>%s</td></tr>\n" % ('B/T:', str(data[i]['SERSICFIT'][2]))
         s2 += "</table>\n"
         s += "<td>%s</td>\n" % (s2)
@@ -124,6 +135,7 @@ def main():
                      format(int(data.IDENT[i])))[num[model]].data
             maskImage = pyfits.open(args[1]+'masks_all/{0}_mask.fits'.
                                     format(int(data.IDENT[i])))[0].data
+            
         except IOError:
             s+= "<td>couldn't open image files for "+repr(data.IDENT[i])+"</td>\n</tr>\n"
             continue
@@ -134,12 +146,18 @@ def main():
         imX = data[i]['XLEN']
         imY = data[i]['YLEN']
         rs=3
-        offset = min(data[i]['SERSICFIT'][1]*rs, 300)
-        x0 = max(data[i]['SERSICFIT'][5] - offset, x0)
-        y0 = max(data[i]['SERSICFIT'][6] - offset, y0)
-        imX = min(imX, data[i]['SERSICFIT'][5] + offset - x0)
-        imY = min(imY, data[i]['SERSICFIT'][6] + offset - y0)
-
+        if not opts.new:
+            offset = min(data[i]['SERSICFIT'][1]*rs, 300)
+            x0 = max(data[i]['SERSICFIT'][5] - offset, x0)
+            y0 = max(data[i]['SERSICFIT'][6] - offset, y0)
+            imX = min(imX, data[i]['SERSICFIT'][5] + offset - x0)
+            imY = min(imY, data[i]['SERSICFIT'][6] + offset - y0)
+        else:
+            offset = min(data[i]['DDVCFIT'][1]*rs,300)
+            x0 = max(data[i]['DDVCFIT'][5] - offset, x0)
+            y0 = max(data[i]['DDVCFIT'][6] - offset, y0)
+            imX = min(imX, data[i]['DDVCFIT'][5] + offset - x0)
+            imY = min(imY, data[i]['DDVCFIT'][6] + offset - y0)
         realImage[maskImage==1] = -1000
         showImage = copy.copy(realImage)
 #    showImage[np.abs(ivarImage) < 1.e-13] = 0.0
@@ -149,7 +167,7 @@ def main():
         modelImage=modelImage[y0:y0+imY-1,x0:x0+imX-1]
 
         modelfit='%sFIT'%model
-        if model in ('DDVC', 'EXPSERSIC', 'DSERSIC'):
+        if model in ('DDVC', 'EXPSERSIC', 'DSERSIC', 'DVCSERSIC', 'DVCEXP'):
             bulgereff=data[i][modelfit][9]
             bulgeq=data[i][modelfit][11]
             bulgephi=data[i][modelfit][15]
@@ -160,9 +178,7 @@ def main():
             bulgecenY=data[i][modelfit][14]
             diskcenX=data[i][modelfit][5]
             diskcenY=data[i][modelfit][6]
-            btt={'DDVC':data[i]['FLUX_RATIO_DDVC'],
-                 'EXPSERSIC':data[i]['FLUX_RATIO_EXPSERSIC'],
-                'DSERSIC':data[i]['FLUX_RATIO_DSERSIC']}[model]
+            btt=data[i]['FLUX_RATIO_'+model]
         else:
             bulgereff=data[i][modelfit][1]
             bulgeq=data[i][modelfit][3]
