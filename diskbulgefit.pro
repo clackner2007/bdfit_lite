@@ -271,6 +271,14 @@ while( again ne 0 and times lt 5 ) do begin
         if (params[1] - parinfo[1].limits[0]) lt 1.e-8 then begin
             params[1] = start_params[1]*(1.-0.2*times)
             again = 1                
+         endif
+        if parinfo[1].limited[1] eq 1 then begin
+           if (parinfo[1].limits[1] - params[1]) lt 1.e-3 then begin
+              if rescale ne 0 then params[9] = params[9]*params[1]
+              params[1] = (0.9-0.1*times)*start_params[1]
+              again = 1
+              if rescale ne 0 then params[9] = params[9]/params[1]
+           endif
         endif
         if ((params[3] - parinfo[3].limits[0]) lt 1.e-8) then begin
             params[3] = (start_params[3]-parinfo[3].limits[0])*$
