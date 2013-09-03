@@ -9,3 +9,10 @@ pbs_array*
 plots/www/*
 plots/*.png
 *spy.session.tar
+*.pyc
+*~
+*.info
+*.sh
+done
+failed
+
