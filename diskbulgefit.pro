@@ -153,7 +153,7 @@ if( not keyword_set(negative) ) then begin
     parinfo[0].limited = [1,0]
     parinfo[0].limits = [0.0, 0]
 endif
-parinfo[1].limited = [1,1]
+parinfo[1].limited = [1,0]
 parinfo[1].limits = [0.0, sqrt(xlen*ylen*1.0)] ;smaller than the seeing, but not so
                                ;small to get ewrid limits
 parinfo[2].limited = [1,1]
@@ -177,7 +177,7 @@ if( nparams ge 16 ) then begin
         parinfo[8].limited = [1,0]
         parinfo[8].limits = [0.0, 0]
      endif
-    parinfo[9].limited = [1,1]
+    parinfo[9].limited = [1,0]
     parinfo[9].limits = parinfo[1].limits
     if keyword_set(rescale) then begin 
        parinfo[9].limited=[1,1]
