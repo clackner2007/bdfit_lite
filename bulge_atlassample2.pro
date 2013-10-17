@@ -217,7 +217,9 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].MAD_DVCSERSIC = median(abs(origdata.image-model))
     output[i].MAD_DVCSERSIC_MASK = median(abs((origdata.image-model)[keep]))
     half_flux = 0.5*totalsersicflux(output[i].DVCSERSICFIT, /cutoff)
-    output[i].REFF_DVCSERSIC = $
+    if output[i].MPFIT_STATUS[0] eq 0 then $
+       output[i].REFF_DVCSERSIC = -1.0 else $
+          output[i].REFF_DVCSERSIC = $
        fluxfraction_radius(model-output[i].SKY_DVCSERSIC, $
                            fluxlevel=half_flux, $
                            q=inputs[i].SERSICFIT[3], $
@@ -239,7 +241,9 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].MAD_DDVC = median(abs(origdata.image-model))
     output[i].MAD_DDVC_MASK = median(abs((origdata.image-model)[keep]))
     half_flux = 0.5*totalsersicflux(output[i].DDVCFIT, /cutoff)
-    output[i].REFF_DDVC = $
+    if output[i].MPFIT_STATUS[1] eq 0 then $
+       output[i].REFF_DDVC = -1.0 else $
+          output[i].REFF_DDVC = $
        fluxfraction_radius(model-output[i].SKY_DDVC, $
                            fluxlevel=half_flux, $
                            q=inputs[i].SERSICFIT[3], $
@@ -259,7 +263,9 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].MAD_DVCEXP = median(abs(origdata.image-model))
     output[i].MAD_DVCEXP_MASK = median(abs((origdata.image-model)[keep]))
     half_flux = 0.5*totalsersicflux(output[i].DVCEXPFIT, /cutoff)
-    output[i].REFF_DVCEXP = $
+    if output[i].MPFIT_STATUS[2] eq 0 then $
+       output[i].REFF_DVCEXP = -1.0 else $
+          output[i].REFF_DVCEXP = $
        fluxfraction_radius(model-output[i].SKY_DVCEXP, $
                            fluxlevel=half_flux, $
                            q=inputs[i].SERSICFIT[3], $
