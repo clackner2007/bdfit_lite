@@ -60,6 +60,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("infile", help='input file')
+    parser.add_argument('path', help='path to output')
+    parser.add_argument('-n', '--new', dest='new', help='new output files',
+                        action='store_true', default=False)
     args = parser.parse_args()
     
     data = pyfits.open(args.infile)[1].data
@@ -74,9 +77,14 @@ def main():
                'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D']
     
 
-    outfiles = ['sersic', 'dblsersic', 'dbldvc', 'expsersic', 'dvc']
-    innames = ['SERSIC', 'DSERSIC', 'DDVC', 'EXPSERSIC', 'DVC']
-    innums = [1, 0, 4, 3, 2]
+    if args.new:
+        outfiles = ['dvcsersic', 'ddvc', 'dvcexp']
+        innames = ['DVCSERSIC', 'DDVC', 'DVCEXP']
+        innums = [0, 1, 2]
+    else:
+        outfiles = ['sersic', 'dblsersic', 'dbldvc', 'expsersic', 'dvc']
+        innames = ['SERSIC', 'DSERSIC', 'DDVC', 'EXPSERSIC', 'DVC']
+        innums = [1, 0, 4, 3, 2]
     
     nentry = len(data)
     
@@ -139,7 +147,7 @@ def main():
         newtab.data.field('MAD_RATIO')[:] = (data['MAD_'+name+'_MASK'][:]/data['MAD_SKY'][:])
         newtab.data.field('RED_CHI2')[:] = data['CHISQ_'+name]
         newtab.data.field('STATUS')[:] = data['MPFIT_STATUS'][:,innums[n]]
-        newtab.writeto(outfiles[n]+'.fits', clobber=True)
+        newtab.writeto(args.path+outfiles[n]+'.fits', clobber=True)
 
     for i in range(len(data.names)):
         print data.names[i], data.formats[i]
