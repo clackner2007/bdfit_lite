@@ -135,7 +135,9 @@ def main():
                      format(int(data.IDENT[i])))[num[model]].data
             maskImage = pyfits.open(args[1]+'masks_all/{0}_mask.fits'.
                                     format(int(data.IDENT[i])))[0].data
-            
+            ivarImage = pyfits.open(args[1]+'ivar/{0}.wht.fits'. \
+                            format(data.FILENAME[i]))[0].data
+
         except IOError:
             s+= "<td>couldn't open image files for "+repr(data.IDENT[i])+"</td>\n</tr>\n"
             continue
@@ -238,14 +240,16 @@ def main():
         origImage=np.asarray(origImage, dtype=np.float64)
         realImage[maskImage==1] = -1000
 
-        ax4.imshow(np.arcsinh(realImage),aspect='equal', 
+        mappable = ax4.imshow(np.arcsinh(ivarImage),aspect='equal', 
                    interpolation='none',
-                   vmin=scoreatpercentile(np.arcsinh(realImage
+                   vmin=scoreatpercentile(np.arcsinh(ivarImage
                                                      [realImage > 
                                                       -999]).flatten(), 0.1),
-                   vmax=scoreatpercentile(np.arcsinh(showImage).flatten(),
+                   vmax=scoreatpercentile(np.arcsinh(ivarImage).flatten(),
                                           99.9))
-        ax4.tick_params(labelsize='xx-small', labelleft='off', labelright='on')
+        cbar = fig.colorbar(mappable)
+        cbar.ax.tick_params(labelsize=9)
+        ax4.tick_params(labelsize='xx-small', labelleft='off', labelright='off')
 
         #improf = getProfile(realImage, data[i]['SERSICFIT'][1],
         #                    data[i]['SERSICFIT'][3],
