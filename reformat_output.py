@@ -143,7 +143,8 @@ def main():
                 np.exp(data[name+'FIT'][:,2+8]*np.exp(0.6950-0.1789/
                                                       data[name+'FIT'][:,2+8]))
 
-        newtab.data.field('Q_TOT')[:] = data['SERSICFIT'][:,3]
+        if not args.new:
+            newtab.data.field('Q_TOT')[:] = data['SERSICFIT'][:,3]
         newtab.data.field('MAD_RATIO')[:] = (data['MAD_'+name+'_MASK'][:]/data['MAD_SKY'][:])
         newtab.data.field('RED_CHI2')[:] = data['CHISQ_'+name]
         newtab.data.field('STATUS')[:] = data['MPFIT_STATUS'][:,innums[n]]
