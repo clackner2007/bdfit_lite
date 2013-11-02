@@ -279,7 +279,9 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].MAD_DSERSIC = median(abs(origdata.image-model))
     output[i].MAD_DSERSIC_MASK = median(abs((origdata.image-model)[keep]))
     half_flux = 0.5*totalsersicflux(output[i].DSERSICFIT, /cutoff)
-    output[i].REFF_DSERSIC = $
+    if output[i].MPFIT_STATUS[0] eq 0 then $
+       output[i].REFF_DSERSIC = -1.0 else $
+          output[i].REFF_DSERSIC = $
        fluxfraction_radius(model-output[i].SKY_DSERSIC, $
                            fluxlevel=half_flux, $
                            q=output[i].SERSICFIT[3], $
@@ -322,7 +324,9 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].MAD_DDVC = median(abs(origdata.image-model))
     output[i].MAD_DDVC_MASK = median(abs((origdata.image-model)[keep]))
     half_flux = 0.5*totalsersicflux(output[i].DDVCFIT, /cutoff)
-    output[i].REFF_DDVC = $
+    if output[i].MPFIT_STATUS[4] eq 0 then $
+       output[i].REFF_DDVC = -1.0 else $
+          output[i].REFF_DDVC = $
        fluxfraction_radius(model-output[i].SKY_DDVC, $
                            fluxlevel=half_flux, $
                            q=output[i].DVCFIT[3], $
@@ -342,7 +346,9 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].MAD_EXPSERSIC = median(abs(origdata.image-model))
     output[i].MAD_EXPSERSIC_MASK = median(abs((origdata.image-model)[keep]))
     half_flux = 0.5*totalsersicflux(output[i].EXPSERSICFIT, /cutoff)
-    output[i].REFF_EXPSERSIC = $
+    if output[i].MPFIT_STATUS[3] eq 0 then $
+       output[i].REFF_EXPSERSIC = -1.0 else $
+          output[i].REFF_EXPSERSIC = $
        fluxfraction_radius(model-output[i].SKY_EXPSERSIC, $
                            fluxlevel=half_flux, $
                            q=output[i].DVCFIT[3], $
