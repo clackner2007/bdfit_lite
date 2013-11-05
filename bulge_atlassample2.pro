@@ -18,7 +18,8 @@ PRO bulge_atlassample2, filename, start, last, outputdir, imagedir, $
 print, 'cpus: ',!CPU.TPOOL_NTHREADS     
 
 gals = mrdfits(filename,1,range=[start,last-1])
-inputs = mrdfits('bcg_data/outputs/final_match.fits', 1, range=[start,last-1])
+;inputs = mrdfits('bcg_data/outputs/final_match.fits', 1, range=[start,last-1])
+inputs = mrdfits('bcg_data/redo_oct2013/outputs/temp.fits',1, range=[start,last-1])
 
 ;output entry for each object, the size of the array is for the bands,
 ;the default is five

@@ -64,7 +64,7 @@ ys=reverse(sort(smooth(total(data.image,1),min([4, ylen-1]))))
 xs=reverse(sort(smooth(total(data.image,2),min([4, xlen-1]))))
 y0=ys[0]
 x0=xs[0]
-;x0=335 for 104373, nothing else worked
+;y0=335 ;for 104373, nothing else worked
 
 if( not keyword_set(nodisk) ) then begin
     nparams = 17
