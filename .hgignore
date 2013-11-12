@@ -15,4 +15,12 @@ plots/*.png
 *.sh
 done
 failed
+*sex
+*orig
+*param
+*cat
+*nnw
+*conv
+attempt
+
 
