@@ -68,7 +68,8 @@ def main():
     data = pyfits.open(args.imlist)[1].data
     ids = []
     files = []
-    for datum in data[144:145]:
+    for datum in data[np.in1d(data['IDENT'], [93684, 104701,
+                              105284, 113047, 36441, 75885])]:
         img, ivar, imhead, ivhead = getImage(datum['IDENT'], datum['FILENAME'],
                                              path=args.inpath)
         ids.append(datum['IDENT'])
@@ -88,7 +89,7 @@ def main():
                                           array=np.asarray(ids)),
                             pyfits.Column(name='FILENAME',format='40A',
                                           array=np.asarray(files))))
-    hdu.writeto(args.outpath+'add_noise_list.fits')
+    hdu.writeto(args.outpath+'add_noise_list.fits', clobber=True)
     return 0
 
 
