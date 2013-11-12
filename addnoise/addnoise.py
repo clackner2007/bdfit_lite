@@ -66,18 +66,29 @@ def main():
     args = parser.parse_args()
     
     data = pyfits.open(args.imlist)[1].data
-    print np.where(data.IDENT==139485)
+    ids = []
+    files = []
     for datum in data[144:145]:
         img, ivar, imhead, ivhead = getImage(datum['IDENT'], datum['FILENAME'],
                                              path=args.inpath)
+        ids.append(datum['IDENT'])
+        files.append(datum['FILENAME'])
         for i in range(args.nimg):
             img2, ivar2 = addnoise(img, ivar, scaleup=args.scale)
             hdu1=pyfits.PrimaryHDU(img2, header=imhead)
-            hdu1.writeto(args.outpath+datum['FILENAME']+'_%02d.fits'%i, clobber=True)
+            hdu1.writeto(args.outpath+'images/'+
+                        datum['FILENAME']+'_%02d.fits'%i, clobber=True)
             hdu2=pyfits.PrimaryHDU(ivar2, header=ivhead)
-            hdu2.writeto(args.outpath+datum['FILENAME']+'_%02d.wht.fits'%i, clobber=True)
-    
+            hdu2.writeto(args.outpath+'ivar/'+
+                        datum['FILENAME']+'_%02d.wht.fits'%i, clobber=True)
+            ids.append(datum['IDENT'])
+            files.append(datum['FILENAME']+'_%02d'%i)
 
+    hdu = pyfits.new_table((pyfits.Column(name='IDENT',format='J',
+                                          array=np.asarray(ids)),
+                            pyfits.Column(name='FILENAME',format='40A',
+                                          array=np.asarray(files))))
+    hdu.writeto(args.outpath+'add_noise_list.fits')
     return 0
 
 
