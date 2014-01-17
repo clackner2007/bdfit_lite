@@ -137,9 +137,11 @@ def main():
                                     format(int(data.IDENT[i])))[0].data
             ivarImage = pyfits.open(args[1]+'ivar/{0}.wht.fits'. \
                             format(data.FILENAME[i]))[0].data
+            print >>sys.stderr, "opening "+args[1]+'images/'+data.FILENAME[i]
 
         except IOError:
             s+= "<td>couldn't open image files for "+repr(data.IDENT[i])+"</td>\n</tr>\n"
+            print >>sys.stderr, "No image "+args[1]+'images/'+data.FILENAME[i]
             continue
 
         imX, imY = realImage.shape
