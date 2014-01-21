@@ -32,6 +32,7 @@ printf SUB "#PBS -N %s_%s\n", $set, $fileext;
 print SUB "#PBS -o pbs/\${PBS_JOBNAME}.out\n".
     "#PBS -e pbs/\${PBS_JOBNAME}.err\n".
     "#PBS -v DISPLAY=0,PATH=/usr/bin:/bin:/usr/local/bin\n".
+    "#PBS -M clairelackner\@gmail.com\n\n".
      "cd \$PBS_O_WORKDIR\n";
 print SUB ". /home/clackner/.idlenv\n";
 print SUB "env\n\n";

@@ -144,6 +144,10 @@ def main():
             print >>sys.stderr, "No image "+args[1]+'images/'+data.FILENAME[i]
             continue
 
+        #if data[i]['SERSICFIT'][1] < 1.e-4:
+        #    print >>sys.stderr, "invalid sersic fit, skipping "+data.FILENAME[i]
+#            continue
+
         imX, imY = realImage.shape
         x0 = data[i]['XCROP']
         y0 = data[i]['YCROP']
@@ -151,7 +155,7 @@ def main():
         imY = data[i]['YLEN']
         rs=3
         if not opts.new:
-            offset = min(data[i]['SERSICFIT'][1]*rs, 300)
+            offset = max(25, min(data[i]['SERSICFIT'][1]*rs, 300))
             x0 = max(data[i]['SERSICFIT'][5] - offset, x0)
             y0 = max(data[i]['SERSICFIT'][6] - offset, y0)
             imX = min(imX, data[i]['SERSICFIT'][5] + offset - x0)
