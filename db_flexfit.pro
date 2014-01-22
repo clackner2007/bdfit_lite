@@ -21,7 +21,7 @@
 
 
 PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
-                errors, status, degfree, skyVal, $
+                errors, status, degfree, skyVal=skyVal, $
                 fix_params=fix_params, $
                 free_sky=free_sky, $
                 free_coords=free_coords, $
@@ -50,24 +50,12 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
                                 ;make arrays for (x,y) values
   
   makegrid, xlen, ylen, x, y
-
-                                        ;center model at highest
-                                        ;summed pixel in each
-                                        ;direction (as in cropimage.pro)
-;y0 = (where(total(data.image,1) eq max(total(data.image,1))))[0]
-;x0 = (where(total(data.image,2) eq max(total(data.image,2))))[0]
-
-  ys=reverse(sort(smooth(total(data.image,1),min([4, ylen-1]))))
-  xs=reverse(sort(smooth(total(data.image,2),min([4, xlen-1]))))
-  y0=ys[0]
-  x0=xs[0]
   
 ;number of parameters, including sky
   nparams = n_elements(params)+1
 ;number of profiles
   nprof = n_elements(params)/8
   plist = indgen(nprof)*8
-  rescale = 0
   phi_ind = 7
   x0_ind = 5
   bulge_ind = 2                 ;OR 10, figure this out
@@ -80,16 +68,14 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
   fixsky = 1
   if keyword_set(free_sky) then fixsky=0
 
-  if (keyword_set(rescale) and (nprof gt 1)) then begin
-     rescale=1
-  endif else begin
-     rescale=0
-  endelse
+  if (keyword_set(rescale) and (nprof gt 1)) then rescale=1 else rescale=0
+
   
   parinfo=replicate({value:0.D, fixed:0, $
                      limited:[0,0], limits:[0.D,0], $
                      mpside:2, tied:''}, nparams)
   
+  if n_elements(skyVal) eq 0 then skyVal=0.0
   parinfo[*].value = [params, skyVal]
   parinfo[*].fixed = [fix_params, fixsky]
 
@@ -101,7 +87,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
      temp = x0_ind
      for prof=0, nprof-2 do begin
         match = x0_ind+8
-        match2 = x0_ind+8
+        match2 = x0_ind+8+1
         parinfo[temp].tied = 'p['+string(match)+']'
         parinfo[temp+1].tied = 'p['+string(match2)+']'
         temp = match
@@ -109,43 +95,6 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
   endif
 
 
-
-;; frac=0.5
-
-;; if( keyword_set(_EXTRA) ) then begin
-
-;;     if tag_exist(_EXTRA, 'start') then parinfo[*].value=_EXTRA.start $
-;;     else begin
-        
-;;         if(tag_exist(_EXTRA,"Reff")) then begin
-;;             parinfo[1].value = _EXTRA.Reff
-;;             if(not keyword_set(nodisk)) then begin
-;;                if rescale eq 0 then $
-;;                   parinfo[9].value = _EXTRA.Reff*0.5 $
-;;                else parinfo[9].value = 0.5
-;;                 frac=0.5
-;;                 if tag_exist(_EXTRA,"fracdev") then begin
-;;                     frac=(0.10)+_EXTRA.fracdev*0.8
-;;                     if(_EXTRA.fracdev lt 0.5) then $
-;;                       parinfo[9].value *= 0.5 $
-;;                     else $
-;;                       parinfo[1].value *= 1.0 ;0.5 + _EXTRA.fracdev ;-1.+2.*_EXTRA.fracdev
-;;                 endif
-
-;;             endif 
-;;         endif 
-;;         if(tag_exist(_EXTRA,"q")) then begin
-;;             parinfo[3].value = max([0.11,_EXTRA.q])
-;;             if(not keyword_set(nodisk)) then parinfo[11].value = max([0.11,_EXTRA.q])
-;;         endif
-;;         if(tag_exist(_EXTRA,"phi")) then begin
-;;             parinfo[phi_ind].value = _EXTRA.phi
-;;             if(not keyword_set(nodisk)) then parinfo[15].value = _EXTRA.phi
-;;         endif
-;;     endelse
-;; endif 
-
-  
   if( not keyword_set(negative) ) then begin
      parinfo[plist].limited = [1,0]
      parinfo[plist].limits = [0.0, 0]
@@ -161,17 +110,19 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
 
      parinfo[plist+2].limited = [1,1]
      parinfo[plist+2].limits = [0.1, 9.0] ; blanton uses 6.0
-     reset = where(parinfo[plist+2].fixed ne 0)
-     if reset ne -1 then parinfo[(plist+2)[reset]].limits = $
-        [parinfo[(plist+2)[reset]].value-1, $
-         parinfo[(plist+2)[reset]].value+1]
+     reset = where(parinfo[plist+2].fixed ne 0, /null)
+     if (reset ne !NULL) then $
+        parinfo[(plist+2)[reset]].limits = $
+        transpose([[parinfo[(plist+2)[reset]].value-1], $
+                   [parinfo[(plist+2)[reset]].value+1]])
      
      parinfo[plist+3].limited = [1,1]
      parinfo[plist+3].limits = [0.05D,20.0D]
-     reset = where(parinfo[plist+3].fixed ne 0)
-     if reset ne -1 then parinfo[(plist+3)[reset]].limits = $
-        [parinfo[(plist+3)[reset]].value-1, $
-         parinfo[(plist+3)[reset]].value+1]
+     reset = where(parinfo[plist+3].fixed ne 0, /null)
+     if (reset ne !NULL) then $
+        parinfo[(plist+3)[reset]].limits = $
+        transpose([[parinfo[(plist+3)[reset]].value-1], $
+                   [parinfo[(plist+3)[reset]].value+1]])
 
                                 ;this is almost always fixed
      parinfo[plist+4].limited = [1,1]
@@ -192,7 +143,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
 
                                         ;normalize maximum pixel value
                                         ;to maximum pixel flux
-  ;; tot = max([total(data.image),10])
+  tot = max([total(data.image),10])
   ;; if( nparams lt 16) then $
   ;;    parinfo[0].value = tot/totalsersicflux(start_params) $
   ;; else begin
@@ -230,7 +181,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
      params=mpfit2dfun('pixelfluxpsf', x, y, data.image, $
                        data.ivar, $
                        start_params, parinfo=parinfo, $
-                       functargs={psfFFT:data.psf,  $
+                       functargs={$;psfFFT:data.psf,  $
                                   psfImage:data.psf, $
                                   cutoff:1, rescale:rescale}, $
                        perror=errors, covar=covar, weights=data.ivar,$
@@ -270,11 +221,11 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
             params[9] = start_params[9]*(1.-0.2*times)
             again=1
         endif
-        if (rescale ne 0) and $
-           (parinfo[9].limits[1] - params[9] lt 1.0e-5) then begin
-           params[9] = (0.9-0.1*times)
-           again=1
-        endif
+        ;; if (rescale ne 0) and $
+        ;;    (parinfo[9].limits[1] - params[9] lt 1.0e-5) then begin
+        ;;    params[9] = (1.9-0.1*times)
+        ;;    again=1
+        ;; endif
         if(params[11] - parinfo[11].limits[0]) lt 1.e-8 then begin
             params[11] =  (start_params[11]-parinfo[11].limits[0])*$
               (1.-0.2*times) + parinfo[11].limits[0]*1.1
@@ -285,7 +236,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
            if rescale ne 0 then rb *= params[1]
             b=max([totalsersicflux([1.0,rb, $
                                     params[10:12],0.0,0.0,0.0]),1.0e-2])
-            params[8] = frac*tot/b
+            params[8] = 0.5*tot/b
             again = 1
         endif
  
@@ -310,7 +261,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
           endif
           if (again eq 1) then $
              params[curr+3] = max([params[curr+3], 1.1*parinfo[curr+3].limits[0]])
-          if (params[curr+1] ge parinfo[curr+1].limits[curr+1]) then begin
+          if (params[curr+1] ge parinfo[curr+1].limits[1]) then begin
              params[curr+1] = start_params[curr+1]*(1-0.2*times)
              again = 1
           endif
@@ -347,18 +298,18 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
 
   if keyword_set(rescale) then begin
      errors[plist[1:*]+1] = sqrt(params[plist[1:*]+1]^2*errors[plist[1:*]+1]^2 + $
-                                params[1]^2*errors[1]^2 + $
-                                2*params[plist[1:*]+1]*params[1]*covar[1,plist[1:*]+1])
+                                 params[1]^2*errors[1]^2 + $
+                                 2*params[plist[1:*]+1]*params[1]*covar[1,plist[1:*]+1])
      covar[*,plist[1:*]+1] *= params[1] ;THIS IS WRONG!!!
      covar[plist[1:*]+1,*] *= params[1] ;still WRONG
      params[plist[1:*]+1] *= params[1]
-endif
+  endif
 ;don't count null pixels in the final DOF to get the reduced chi squared
-junk=where(data.ivar lt 1.0e-12, nullpix)
-chisquare=bn/(dof - nullpix)
-status=fitstat
-degfree = dof-nullpix
-skyVal = params[skyInd]
-params = params[0:skyInd-1]
+  junk=where(data.ivar lt 1.0e-12, nullpix)
+  chisquare=bn/(dof - nullpix)
+  status=fitstat
+  degfree = dof-nullpix
+  skyVal = params[skyInd]
+  params = params[0:skyInd-1]
 
 END
