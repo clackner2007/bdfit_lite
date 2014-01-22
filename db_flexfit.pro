@@ -349,8 +349,8 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
      errors[plist[1:*]+1] = sqrt(params[plist[1:*]+1]^2*errors[plist[1:*]+1]^2 + $
                                 params[1]^2*errors[1]^2 + $
                                 2*params[plist[1:*]+1]*params[1]*covar[1,plist[1:*]+1])
-     covar[*,9] *= params[1] ;THIS IS WRONG!!!
-     covar[9,*] *= params[1] ;still WRONG
+     covar[*,plist[1:*]+1] *= params[1] ;THIS IS WRONG!!!
+     covar[plist[1:*]+1,*] *= params[1] ;still WRONG
      params[plist[1:*]+1] *= params[1]
 endif
 ;don't count null pixels in the final DOF to get the reduced chi squared
