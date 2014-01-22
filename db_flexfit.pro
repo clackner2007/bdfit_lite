@@ -22,7 +22,7 @@
 
 PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
                 errors, status, degfree, skyVal, $
-                fixparams=fixparams, $
+                fix_params=fix_params, $
                 free_sky=free_sky, $
                 free_coords=free_coords, $
                 negative=negative, fixq=fixq, $
@@ -63,19 +63,22 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
   x0=xs[0]
   
 ;number of parameters, including sky
-  nparams = len(params)+1
+  nparams = n_elements(params)+1
 ;number of profiles
-  nprof = len(params)/8
+  nprof = n_elements(params)/8
   plist = indgen(nprof)*8
   rescale = 0
-  phi_id = 7
+  phi_ind = 7
   x0_ind = 5
   bulge_ind = 2                 ;OR 10, figure this out
-  skyInd = len(params)
+  skyInd = n_elements(params)
 
-  if not keyword_set(fix_params) then fix_params = intarr(nparams-1)
-  if not keyword_set(free_sky) then fix_params = [fix_params, 1] else $
-     fix_params = [fix_params, 0]
+  if n_elements(fix_params) eq 0 then begin
+     fix_params = intarr(nparams-1)
+     fix_params[4+plist] = 1
+  endif
+  fixsky = 1
+  if keyword_set(free_sky) then fixsky=0
 
   if (keyword_set(rescale) and (nprof gt 1)) then begin
      rescale=1
@@ -88,7 +91,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
                      mpside:2, tied:''}, nparams)
   
   parinfo[*].value = [params, skyVal]
-  parinfo[*].fixed = fix_params
+  parinfo[*].fixed = [fix_params, fixsky]
 
                                         ;define parinfo, which gives limits to
                                         ;parameters as well as starting values
@@ -185,7 +188,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
   start_params = parinfo[*].value
 
                                         ;normalize psf flux to one
-  data.psf /= total(data.psf)
+  ;data.psf /= total(data.psf)
 
                                         ;normalize maximum pixel value
                                         ;to maximum pixel flux
@@ -356,5 +359,6 @@ chisquare=bn/(dof - nullpix)
 status=fitstat
 degfree = dof-nullpix
 skyVal = params[skyInd]
+params = params[0:skyInd-1]
 
 END
