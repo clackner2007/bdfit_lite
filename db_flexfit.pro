@@ -1,3 +1,4 @@
+;+
 ;____________________________________
 ;
 ; Claire Lackner
@@ -16,8 +17,12 @@
 ;
 ; the fits have c=0 (bulge/disky isophotes) and the centers of the
 ;profiles are equal to each other
+;
+;
+; todo: add a way to include fractional limits on bulge size
+;  i.e. as if there were a range of allowed bulge sizes
 ;____________________________________
-
+;-
 
 
 PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
