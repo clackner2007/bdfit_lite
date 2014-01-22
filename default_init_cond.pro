@@ -17,7 +17,7 @@ FUNCTION default_init_cond, nprof, image, sersics=sersics, rescale=rescale
   
   params = dblarr(8*nprof)
   fixed_params = intarr(8*nprof)
-  plist = dblarr(nprof)*8
+  plist = indgen(nprof)*8
   
   if n_elements(sersics) eq 0 then begin
      sersics = dblarr(nprof) + 1.0
@@ -25,8 +25,9 @@ FUNCTION default_init_cond, nprof, image, sersics=sersics, rescale=rescale
   endif
   
   ;fix the C values
+
   fixed_params[plist+4] = 1
-  xs = getXY_start(image)
+  xs = getxy_start(image)
   x0 = xs[0]
   y0 = xs[1]
   
