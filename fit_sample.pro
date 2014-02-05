@@ -14,136 +14,68 @@
 
 PRO fit_sample, filename, start, last, outputdir, imagedir, $
                 redo=redo, residuals=residuals, $
-                crop=crop, profiles=profiles
+                crop=crop, profiles=profiles, $
+                freesky=freesky, cutoff=cutoff
 print, 'cpus: ',!CPU.TPOOL_NTHREADS     
 
 gals = mrdfits(filename,1,range=[start,last-1])
 
 ;default is a single sersic profile
-if n_elements(profiles) eq 0 then profiles=['SER']
+if (n_elements(profiles) eq 0) then profiles={SER:8}
+;profiles = hash(profiles, /extract)
 
 
 if not keyword_set(redo) then begin
 
-   output_entry = create_struct(gals[0] ['XCROP', 'YCROP',$
+   output_entry = create_struct(gals[0], ['XCROP', 'YCROP',$
                                            'XLEN', 'YLEN'], $
                                0L, 0L, 0L, 0L)
 
-   for indp=0, n_elements(profiles) do begin
-      prof = profiles[indp]
-      nprof = n_elements(prof)/3
-      ent_names = ['FIT_'+profiles[indp], 'CHISQ_'+profiles[indp], $
-                   'COVAR_'+profiles[indp], 'PERR_'+profiles[indp], $
-                   'STAT_'+profiles[indp], 'DOF_'+profiles[indp], $
-                   'SKY_'+profiles[indp], 'FLUXRAIO_'+profiles[indp]]
+   for indp=0, n_tags(profiles) do begin
+      prof = (get_tags(profiles))[indp]
+      nfit = profiles.(indp)
+                                ;output entries for each profile
+                                ;include: the fit parameters, the
+                                ;reduced chi^2 value, the 1-sigma
+                                ;fitting errors in the parameters, the
+                                ;covariance matrix of the parameters,
+                                ;the status of the fitter, the degrees
+                                ;of freedom, the sky value, the error
+                                ;in the sky, and the flux ratio of the
+                                ;profiles fit. This is ALWAYS
+                                ;first/total (like B/T)
+      ent_names = ['FIT_'+prof, 'CHISQ_'+prof, $
+                   'COVAR_'+prof, 'PERR_'+prof, $
+                   'STAT_'+prof, 'DOF_'+prof, $
+                   'SKY_'+prof, 'SKYERR_'+prof, 'FLUXRAITO_'+prof]
       output_entry = create_struct(output_entry, $
                                    ent_names, $
-           
-                              
+                                   dblarr(nfit), 0.0D, $
+                                   dblarr(nfit,nfit), dblarr(nfit), $
+                                   0, 0L, 0.0D, 0.0D, 0.0D)                             
                                    
-                                   
-   endfor   
-
-   output_entry = create_struct( gals[0], ['DSERSICFIT', $
-                                           'SERSICFIT', $
-                                           'DVCFIT', $
-                                           'DDVCFIT', $
-                                           'EXPSERSICFIT', $
-                                           'CHISQ_DSERSIC', $
-                                           'CHISQ_SERSIC', $
-                                           'CHISQ_DVC',$
-                                           'CHISQ_DDVC', $
-                                           'CHISQ_EXPSERSIC', $
-                                           'COVAR_DSERSIC', $
-                                           'COVAR_SERSIC', $
-                                           'COVAR_DVC', $
-                                           'COVAR_DDVC', $
-                                           'COVAR_EXPSERSIC', $
-                                           'PERR_DSERSIC',$
-                                           'PERR_SERSIC',$
-                                           'PERR_DVC', $
-                                           'PERR_DDVC', $
-                                           'PERR_EXPSERSIC', $
-                                           'DOF_DSERSIC', $
-                                           'DOF_SERSIC', $
-                                           'DOF_DVC', $
-                                           'DOF_DDVC', $
-                                           'DOF_EXPSERSIC', $
-                                           'MPFIT_STATUS', $
-                                           'XCROP', 'YCROP',$
-                                           'XLEN', 'YLEN',$
-                                           'MAD_SKY', $
-                                           'MAD_DSERSIC', $
-                                           'MAD_DSERSIC_MASK', $
-                                           'MAD_SERSIC', $
-                                           'MAD_SERSIC_MASK', $
-                                           'MAD_DVC', $
-                                           'MAD_DVC_MASK',$
-                                           'MAD_DDVC', $
-                                           'MAD_DDVC_MASK',$
-                                           'MAD_EXPSERSIC', $
-                                           'MAD_EXPSERSIC_MASK',$
-                                           'SKY_DSERSIC', $
-                                           'SKY_DSERSIC_ERR', $
-                                           'SKY_DSERSIC_COVAR', $
-                                           'SKY_SERSIC', $
-                                           'SKY_SERSIC_ERR', $
-                                           'SKY_SERSIC_COVAR', $
-                                           'SKY_DVC', $
-                                           'SKY_DVC_ERR', $
-                                           'SKY_DVC_COVAR', $
-                                           'SKY_DDVC', $
-                                           'SKY_DDVC_ERR', $
-                                           'SKY_DDVC_COVAR', $
-                                           'SKY_EXPSERSIC', $
-                                           'SKY_EXPSERSIC_ERR', $
-                                           'SKY_EXPSERSIC_COVAR', $
-                                           'FLUX_RATIO_DSERSIC', $
-                                           'REFF_DSERSIC', $
-                                           'FLUX_RATIO_DDVC', $
-                                           'REFF_DDVC', $
-                                           'FLUX_RATIO_EXPSERSIC', $
-                                           'REFF_EXPSERSIC'], $
-                                 dblarr(16), dblarr(8), $
-                                 dblarr(8), dblarr(16), dblarr(16), $
-                                 0.0D, $
-                                 0.0D, 0.0D, 0.0D, 0.0D, $
-                                 dblarr(16,16), $
-                                 dblarr(8,8), dblarr(8,8), $
-                                 dblarr(16,16), dblarr(16,16), $
-                                 dblarr(16), dblarr(8), $
-                                 dblarr(8), dblarr(16), dblarr(16), $
-                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
-                                 dblarr(5), $
-                                 0L, 0L, 0L, 0L, $
-                                 0.0D, $
-                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
-                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, $
-                                 0.0D, 0.0D, dblarr(17), $
-                                 0.0D, 0.0D, dblarr(9), $
-                                 0.0D, 0.0D, dblarr(9), $
-                                 0.0D, 0.0D, dblarr(17), $
-                                 0.0D, 0.0D, dblarr(17), $
-                                 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D )
+   endfor
 
 endif else output_entry = create_struct(gals[0])
 
 ;insert known values into output strucutre array
 output = replicate( output_entry, n_elements(gals) )
 struct_assign, gals, output
-;output.BANDS = (where(notignore ne 0))#(intarr(n_elements(gals))+1)
+outnames = tag_names(output)
 
-;file for writing out times
-;openw, 1, 'timing.dat'
 
 ;loop over each image
 for i=0L, n_elements(gals)-1L do begin
 
     print, gals[i].IDENT, ': ', i+1, ' of ', n_elements(gals)
     t1=systime(1)
-        
+    
+    ;get the image, ivar, and psf
     data = get_imivarpsf(gals[i].IDENT, strtrim(gals[i].FILENAME), imagedir)
 
+                                ;figure out the size of the image and
+                                ;do cropping (if wanted, you rarely
+                                ;want this)
     origsize = size(data.image, /dimensions )
     if n_elements(origsize) eq 1 then continue
     xcrop = 0
@@ -165,229 +97,53 @@ for i=0L, n_elements(gals)-1L do begin
     endif
 
     print, '   cropped size:', imsize[0],'x',imsize[1]
+
+    ;save the image size to the structure (useful, esp. if cropped)
     output[i].XLEN=imsize[0]
     output[i].YLEN=imsize[1]
     output[i].XCROP=xcrop
     output[i].YCROP=ycrop
-        
-    makegrid, imsize[0], imsize[1], x, y
-    psf_fft = make_psf_fft(data.psf, data.image)
 
-                                        ;fit dVc profile
-    diskbulgefit,nod,params,data.image,psf_fft,data.ivar,$
-      cs,covar,errors,fitstat,dof, sky, bulgeSersic=4.0, $
-      nodisk=1, /free_sky, _EXTRA={Reff:0.2*sqrt(total(data.mask))}
+            
 
-    params[5] += xcrop
-    params[6] += ycrop
-    output[i].DVCFIT = params
-    output[i].CHISQ_DVC = cs
-    output[i].PERR_DVC[0:7] = errors[0:7]
-    output[i].COVAR_DVC[0:7,0:7] = covar[0:7,0:7]          
-    output[i].MPFIT_STATUS[2] = fitstat
-    output[i].DOF_DVC = dof
-    output[i].SKY_DVC = sky
-    output[i].SKY_DVC_ERR = errors[8]
-    output[i].SKY_DVC_COVAR = covar[8,0:8]
+    ;do the profile fitting
+    for ip=0, n_tags(profiles) do begin
+       prof = (tag_names(profiles))[ip]
+       nvar = profiles.(ip)
+       plist = indgen(nvar/8)*8
 
+                                ;check if we allow a freesky otherwise
+                                ;it defaults to 0.0 TODO: allow the
+                                ;sky to be fixed to a value other than
+                                ;0, and let this change for different
+                                ;profiles 
+       if keyword_set(freesky) then sky=0.0D else sky=!NULL 
+
+
+       db_flexfit, params, data.image, data.psf, data.ivar, $
+                   chsq, covar, err, stat, dof, skyVal=sky, $
+                   free_sky=freesky
+       params[plist+5] += xcrop
+       params[plist+6] += ycrop
+
+       output[i].(WHERE(STRCMP(outnames,'FIT_'+prof) EQ 1)) = params
+       output[i].(WHERE(STRCMP(outnames,'COVAR_'+prof) EQ 1)) = covar[0:nvar-1, 0:nvar-1]
+       output[i].(WHERE(STRCMP(outnames,'PERR_'+prof) EQ 1)) = err[0:nvar-1]
+       output[i].(WHERE(STRCMP(outnames,'CHISQ_'+prof) EQ 1)) = chsq
+       output[i].(WHERE(STRCMP(outnames,'STAT_'+prof) EQ 1)) = stat
+       output[i].(WHERE(STRCMP(outnames,'DOF_'+prof) EQ 1)) = dof
+       output[i].(WHERE(STRCMP(outnames,'SKY_'+prof) EQ 1)) = sky
+       output[i].(WHERE(STRCMP(outnames,'SKYERR_'+prof) EQ 1)) = err[nvar]
+       output[i].(WHERE(STRCMP(outnames,'FLUXRATIO_'+prof) EQ 1)) = $
+          bulgetotot(params, cutoff=cutoff)
+
+    endfor
    
-    if( not keyword_set(nosersic) ) then begin
-        diskbulgefit, nod, params, data.image, psf_fft, data.ivar, $
-          cs, covar, errors, fitstat, $
-          dof, sky, bulgeSersic=4.0, $ ;4.0*fracDev + 1.0, $ 
-          nodisk=1, freebulge=1, /free_sky, $
-          _EXTRA={Reff:params[1], q:params[3], phi:params[7]}
-                   
-        params[5] += xcrop
-        params[6] += ycrop
-        output[i].SERSICFIT[*] = params
-        output[i].CHISQ_SERSIC = cs
-        output[i].PERR_SERSIC[0:7] = errors[0:7]
-        output[i].COVAR_SERSIC[0:7,0:7] = covar[0:7,0:7]          
-        output[i].MPFIT_STATUS[1] = fitstat
-        output[i].DOF_SERSIC = dof
-        output[i].SKY_SERSIC = sky
-        output[i].SKY_SERSIC_ERR = errors[8]
-        output[i].SKY_SERSIC_COVAR = covar[8,0:8]
-     endif
-
-    diskbulgefit, diskparam, bulgeparam, data.image, psf_fft, data.ivar, $
-                  chsqds, covards, errds, stat, dofds, sky, bulgeSersic=4.0D, $
-                  /free_sky, /freebulge, /freedisk, $
-                  _EXTRA={Reff:params[1], q:params[3], phi:params[7], $
-                          fracdev:0.8}
-    output[i].MPFIT_STATUS[0] = stat
-    output[i].SKY_DSERSIC = sky
-    output[i].SKY_DSERSIC_ERR = errds[16]
-    output[i].SKY_DSERSIC_COVAR = covards[16,0:16]
-    diskparam[5:6] += [xcrop, ycrop]
-    bulgeparam[5:6] += [xcrop, ycrop]
-    output[i].PERR_DSERSIC = errds[0:15]
-    output[i].COVAR_DSERSIC = covards[0:15,0:15]
-    output[i].CHISQ_DSERSIC = chsqds
-    output[i].DOF_DSERSIC = dofds
-    if diskparam[2] ge bulgeparam[2] then $
-       output[i].DSERSICFIT = [bulgeparam[*], diskparam[*]] $
-    else $
-       output[i].DSERSICFIT = [diskparam[*], bulgeparam[*]]
-
-    output[i].FLUX_RATIO_DSERSIC = bulgetotot(output[i].DSERSICFIT, /cutoff)
-
-    diskbulgefit, diskparam, bulgeparam, data.image, psf_fft, data.ivar, $
-                  chsqds, covards, errds, stat, dofds, sky, bulgeSersic=4.0D, $
-                  /free_sky, diskSersic=4.0D, $
-                  _EXTRA={Reff:min([params[1]*4.0, $
-                                    sqrt(imsize[0]*imsize[1]*1.0)*0.8]),$
-                          q:params[3], phi:params[7], $
-                          fracdev:0.1}
-    output[i].MPFIT_STATUS[4] = stat
-    output[i].SKY_DDVC = sky
-    output[i].SKY_DDVC_ERR = errds[16]
-    output[i].SKY_DDVC_COVAR = covards[16,0:16]
-    diskparam[5:6] += [xcrop, ycrop]
-    bulgeparam[5:6] += [xcrop, ycrop]
-    output[i].PERR_DDVC = errds[0:15]
-    output[i].COVAR_DDVC = covards[0:15,0:15]
-    output[i].CHISQ_DDVC = chsqds
-    output[i].DOF_DDVC = dofds
-    if diskparam[1] lt bulgeparam[1] then $
-       output[i].DDVCFIT = [bulgeparam[*], diskparam[*]] $
-    else $
-       output[i].DDVCFIT = [diskparam[*], bulgeparam[*]]
-
-    output[i].FLUX_RATIO_DDVC = bulgetotot(output[i].DDVCFIT, /cutoff)
-
-    diskbulgefit, diskparam, bulgeparam, data.image, psf_fft, data.ivar, $
-                  chsqds, covards, errds, stat, dofds, sky, bulgeSersic=4.0D, $
-                  /free_sky, diskSersic=1.0D, /freebulge, $
-                  _EXTRA={Reff:min([params[1]*4.0, $
-                                    sqrt(imsize[0]*imsize[1]*1.0)*0.8]), $
-                          q:params[3], phi:params[7], $
-                          fracdev:0.2}
-    output[i].MPFIT_STATUS[3] = stat
-    output[i].SKY_EXPSERSIC = sky
-    output[i].SKY_EXPSERSIC_ERR = errds[16]
-    output[i].SKY_EXPSERSIC_COVAR = covards[16,0:16]
-    diskparam[5:6] += [xcrop, ycrop]
-    bulgeparam[5:6] += [xcrop, ycrop]
-    output[i].PERR_EXPSERSIC = errds[0:15]
-    output[i].COVAR_EXPSERSIC = covards[0:15,0:15]
-    output[i].CHISQ_EXPSERSIC = chsqds
-    output[i].DOF_EXPSERSIC = dofds
-    
-    output[i].EXPSERSICFIT = [diskparam[*], bulgeparam[*]]
-
-    output[i].FLUX_RATIO_EXPSERSIC = bulgetotot(output[i].EXPSERSICFIT, /cutoff)
-
-    print, 'timed: ',systime(1)-t1
-    ;mwrfits, output, 'temp.fits', /create
-
-    keep = where(origdata.mask,complement=notkeep)
-    output[i].MAD_SKY = median(abs(origdata.image[notkeep]))
-
-
-    ;put the model images in a file
-    if keyword_set(residuals) then begin
-        modName = string( output[i].IDENT, format='("models/M",i09,".fits")')
-        modName = outputdir+modName
-    endif
-    makegrid, origsize[0], origsize[1], x, y
-        
-    model = pixelfluxpsf(x,y,$
-                         [output[i].DSERSICFIT,output[i].SKY_DSERSIC], $
-                         _EXTRA={cutoff:1,psfImage:data.psf})
-        
-    output[i].MAD_DSERSIC = median(abs(origdata.image-model))
-    output[i].MAD_DSERSIC_MASK = median(abs((origdata.image-model)[keep]))
-    half_flux = 0.5*totalsersicflux(output[i].DSERSICFIT, /cutoff)
-    if output[i].MPFIT_STATUS[0] eq 0 then $
-       output[i].REFF_DSERSIC = -1.0 else $
-          output[i].REFF_DSERSIC = $
-       fluxfraction_radius(model-output[i].SKY_DSERSIC, $
-                           fluxlevel=half_flux, $
-                           q=output[i].SERSICFIT[3], $
-                           phi=output[i].SERSICFIT[7], $
-                           x0=output[i].DSERSICFIT[5], $
-                           y0=output[i].DSERSICFIT[6], $
-                           guess=[0.0, max([output[i].DSERSICFIT[9], $
-                                            output[i].DSERSICFIT[1]])])
-
-    if keyword_set(residuals) then begin
-       mwrfits, model, modName, /create
-    endif
-
-    model = pixelfluxpsf(x,y,$
-                         [output[i].SERSICFIT,output[i].SKY_SERSIC], $
-                         _EXTRA={cutoff:1,psfImage:data.psf})
-        
-    output[i].MAD_SERSIC = median(abs(origdata.image-model))
-    output[i].MAD_SERSIC_MASK = median(abs((origdata.image-model)[keep]))
-
-    if keyword_set(residuals) then begin
-       mwrfits, model, modName
-    endif
-
-    model = pixelfluxpsf(x,y,$
-                         [output[i].DVCFIT,output[i].SKY_DVC], $
-                         _EXTRA={cutoff:1,psfImage:data.psf})
-        
-    output[i].MAD_DVC = median(abs(origdata.image-model))
-    output[i].MAD_DVC_MASK = median(abs((origdata.image-model)[keep]))
-
-    if keyword_set(residuals) then begin
-       mwrfits, model, modName
-    endif
-
-    model = pixelfluxpsf(x,y,$
-                         [output[i].DDVCFIT,output[i].SKY_DDVC], $
-                         _EXTRA={cutoff:1,psfImage:data.psf})
-        
-    output[i].MAD_DDVC = median(abs(origdata.image-model))
-    output[i].MAD_DDVC_MASK = median(abs((origdata.image-model)[keep]))
-    half_flux = 0.5*totalsersicflux(output[i].DDVCFIT, /cutoff)
-    if output[i].MPFIT_STATUS[4] eq 0 then $
-       output[i].REFF_DDVC = -1.0 else $
-          output[i].REFF_DDVC = $
-       fluxfraction_radius(model-output[i].SKY_DDVC, $
-                           fluxlevel=half_flux, $
-                           q=output[i].DVCFIT[3], $
-                           phi=output[i].DVCFIT[7], $
-                           x0=output[i].DDVCFIT[5], $
-                           y0=output[i].DDVCFIT[6], $
-                           guess=[0.0, max([output[i].DDVCFIT[9], $
-                                            output[i].DDVCFIT[1]])])
-    if keyword_set(residuals) then begin
-       mwrfits, model, modName
-    endif
-    
-    model = pixelfluxpsf(x,y,$
-                         [output[i].EXPSERSICFIT,output[i].SKY_EXPSERSIC], $
-                         _EXTRA={cutoff:1,psfImage:data.psf})
-        
-    output[i].MAD_EXPSERSIC = median(abs(origdata.image-model))
-    output[i].MAD_EXPSERSIC_MASK = median(abs((origdata.image-model)[keep]))
-    half_flux = 0.5*totalsersicflux(output[i].EXPSERSICFIT, /cutoff)
-    if output[i].MPFIT_STATUS[3] eq 0 then $
-       output[i].REFF_EXPSERSIC = -1.0 else $
-          output[i].REFF_EXPSERSIC = $
-       fluxfraction_radius(model-output[i].SKY_EXPSERSIC, $
-                           fluxlevel=half_flux, $
-                           q=output[i].DVCFIT[3], $
-                           phi=output[i].DVCFIT[7], $
-                           x0=output[i].EXPSERSICFIT[5], $
-                           y0=output[i].EXPSERSICFIT[6], $
-                           guess=[0.0, max([output[i].EXPSERSICFIT[9], $
-                                            output[i].EXPSERSICFIT[1]])])
-    if keyword_set(residuals) then begin
-       mwrfits, model, modName
-    endif
-
 endfor
 ;close,1
 ;write output fits file: name of file=
 append = string( start, last-1, format='("RAWFIT",i05,".",i05,".fits")')
 outname = outputdir+append
-
 
 mwrfits, output, outname, /create
 print, 'writing output file: '+outname
