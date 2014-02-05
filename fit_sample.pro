@@ -104,7 +104,11 @@ for i=0L, n_elements(gals)-1L do begin
     output[i].XCROP=xcrop
     output[i].YCROP=ycrop
 
-            
+    ;if residuals is set, then save the model images
+    if keyword_set(residuals) then begin
+       modName = string(output[i].IDENT, format='("models/M",i09,".fits")')
+       modName = outputdir + modName
+    endif
 
     ;do the profile fitting
     for ip=0, n_tags(profiles)-1 do begin
@@ -129,7 +133,6 @@ for i=0L, n_elements(gals)-1L do begin
                                 ;the profile name is, if its 'DVC',
                                 ;'EXP', 'SER', 'DVCEXP' then do the
                                 ;standard things
-
        tname1 = where(strcmp(outnames, prof+'_FIX') eq 1)
        tname2 = where(strcmp(outnames, prof+'_VAL') eq 1)
 
@@ -173,24 +176,34 @@ for i=0L, n_elements(gals)-1L do begin
 
        db_flexfit, params, data.image, data.psf, data.ivar, $
                    chsq, covar, err, stat, dof, skyVal=sky, $
-                   free_sky=freesky
+                   free_sky=freesky, fix_params=fixed_params
        params[plist+5] += xcrop
        params[plist+6] += ycrop
 
        output[i].(WHERE(STRCMP(outnames,'FIT_'+prof) EQ 1)) = params
-       output[i].(WHERE(STRCMP(outnames,'COVAR_'+prof) EQ 1)) = covar[0:nvar-1, 0:nvar-1]
+       output[i].(WHERE(STRCMP(outnames,'COVAR_'+prof) EQ 1)) = $
+          covar[0:nvar-1, 0:nvar-1]
        output[i].(WHERE(STRCMP(outnames,'PERR_'+prof) EQ 1)) = err[0:nvar-1]
        output[i].(WHERE(STRCMP(outnames,'CHISQ_'+prof) EQ 1)) = chsq
        output[i].(WHERE(STRCMP(outnames,'STAT_'+prof) EQ 1)) = stat
        output[i].(WHERE(STRCMP(outnames,'DOF_'+prof) EQ 1)) = dof
        output[i].(WHERE(STRCMP(outnames,'SKY_'+prof) EQ 1)) = sky
        output[i].(WHERE(STRCMP(outnames,'SKYERR_'+prof) EQ 1)) = err[nvar]
-       output[i].(WHERE(STRCMP(outnames,'FLUXRATIO_'+prof) EQ 1)) = $
-          bulgetotot(params, cutoff=cutoff)
+       if n_elements(params) gt 8 then $
+          output[i].(WHERE(STRCMP(outnames,'FLUXRATIO_'+prof) EQ 1)) = $
+          bulgetotot(params, cutoff=cutoff) $
+       else $
+          output[i].(WHERE(STRCMP(outnames,'FLUXRATIO_'+prof) EQ 1)) = 1.0
 
+       if keyword_set(residuals) then begin
+          model = model_image(origsize[0], origsize[1], params, $
+                              data.psf, cutoff=cutoff)
+          mwrfits, model, modName
+       endif
+       
     endfor
    
-endfor
+ endfor
 ;close,1
 ;write output fits file: name of file=
 append = string( start, last-1, format='("RAWFIT",i05,".",i05,".fits")')
