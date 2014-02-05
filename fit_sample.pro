@@ -31,8 +31,8 @@ if not keyword_set(redo) then begin
                                            'XLEN', 'YLEN'], $
                                0L, 0L, 0L, 0L)
 
-   for indp=0, n_tags(profiles) do begin
-      prof = (get_tags(profiles))[indp]
+   for indp=0, n_tags(profiles)-1 do begin
+      prof = (tag_names(profiles))[indp]
       nfit = profiles.(indp)
                                 ;output entries for each profile
                                 ;include: the fit parameters, the
@@ -47,7 +47,7 @@ if not keyword_set(redo) then begin
       ent_names = ['FIT_'+prof, 'CHISQ_'+prof, $
                    'COVAR_'+prof, 'PERR_'+prof, $
                    'STAT_'+prof, 'DOF_'+prof, $
-                   'SKY_'+prof, 'SKYERR_'+prof, 'FLUXRAITO_'+prof]
+                   'SKY_'+prof, 'SKYERR_'+prof, 'FLUXRATIO_'+prof]
       output_entry = create_struct(output_entry, $
                                    ent_names, $
                                    dblarr(nfit), 0.0D, $
@@ -107,7 +107,7 @@ for i=0L, n_elements(gals)-1L do begin
             
 
     ;do the profile fitting
-    for ip=0, n_tags(profiles) do begin
+    for ip=0, n_tags(profiles)-1 do begin
        prof = (tag_names(profiles))[ip]
        nvar = profiles.(ip)
        plist = indgen(nvar/8)*8
@@ -117,8 +117,59 @@ for i=0L, n_elements(gals)-1L do begin
                                 ;sky to be fixed to a value other than
                                 ;0, and let this change for different
                                 ;profiles 
-       if keyword_set(freesky) then sky=0.0D else sky=!NULL 
+       if keyword_set(freesky) then sky=0.0D else sky=!NULL
 
+                                ;check to see if there are fixed
+                                ;parameters set in the input the names
+                                ;of fixed parameters should be
+                                ;{PROF}_FIX which is a boolean array
+                                ;(=1 for fixed) and {PROF}_VAL which
+                                ;is any array of starting values if
+                                ;neither are set, check and see what
+                                ;the profile name is, if its 'DVC',
+                                ;'EXP', 'SER', 'DVCEXP' then do the
+                                ;standard things
+
+       tname1 = where(strcmp(outnames, prof+'_FIX') eq 1)
+       tname2 = where(strcmp(outnames, prof+'_VAL') eq 1)
+
+       if ((tname1 ne -1) and (tname2 ne -1)) then begin
+          params = output[i].(tname2)
+          fixed_params = output[i].(tname1)
+          ;set the initial scalings and central position
+          init_cond, params, fixed_params, data.image
+       endif else begin
+          case prof of
+             'DVC': begin
+                 temp = default_init_cond(1,data.image, sersics=[4.0])
+                 params = temp.params
+                 fixed_params = temp.fixed
+                 fixed_params[2+plist] = 1
+              end
+             'EXP': begin
+                temp = default_init_cond(1,data.image, sersics=[1.0])
+                params = temp.params
+                fixed_params = temp.fixed
+                fixed_params[2+plist] = 1
+             end
+             'SER': begin
+                 temp = default_init_cond(1,data.image, sersics=[4.0])
+                 params = temp.params
+                 fixed_params = temp.fixed
+              end
+             'DVCEXP': begin
+                temp = default_init_cond(2, data.image, sersic=[4.0,1.0])
+                params = temp.params
+                fixed_params = temp.fixed
+                fixed_params[2+plist] = 1
+             end
+             else: begin
+                temp = default_init_cond(nvar/8, data.image)
+                params = temp.params
+                fixed_params = temp.fixed
+             end
+          endcase
+       endelse 
 
        db_flexfit, params, data.image, data.psf, data.ivar, $
                    chsq, covar, err, stat, dof, skyVal=sky, $
