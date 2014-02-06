@@ -5,9 +5,9 @@
 ;
 ;  get_imivarpsf.pro
 ;
-; returns a data object with the COSMOS image, ivar, and psf
-; uses and exposure time of 2028.0 seconds to get image variance right
-;  THERE MAY STILL BE ODD FACTORS OF ~4 hanging around from drizzling
+; returns a data object with the image, ivar, psf and a mask (not
+;really used)
+; this is specfic to the NSA galaxy image format
 ;____________________________________
 
 

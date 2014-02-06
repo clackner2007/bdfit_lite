@@ -14,7 +14,6 @@
 
 
 FUNCTION default_init_cond, nprof, image, sersics=sersics, rescale=rescale
-  
   params = dblarr(8*nprof)
   fixed_params = intarr(8*nprof)
   plist = indgen(nprof)*8
