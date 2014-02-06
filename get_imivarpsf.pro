@@ -11,115 +11,53 @@
 ;____________________________________
 
 
-FUNCTION get_imivarpsf, id, name, rootpath
+FUNCTION get_imivarpsf, name, rootpath, atlasid, parentid, band=band
+
+;default to r-band image
+if n_elements(band) ne 1 then band=2
+bands=['u', 'g', 'r', 'i', 'z', 'nd', 'fd']
+
+pstring = strtrim(parentid, 2)
 
 
-if file_test(rootpath+'images/'+name+'.fits') eq 0 then begin
-    print, "couldn't find file "+rootpath+"images/"+name+'.fits'
+imgname = rootpath+'images/'+name+'-'+pstring + $
+          '-atlas-'+strtrim(atlasid, 2)+'.fits' 
+if file_test( imgname ) eq 0 then begin
+    print, "couldn't find file "+imgname
     return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
  endif
 
-if file_test(rootpath+'ivar/'+name+'.wht.fits') eq 0 then begin
-    print, "couldn't find file "+rootpath+"ivar/"+name+'.wht.fits'
+ivarname = rootpath+'ivar/'+name+'-parent-'+pstring+'.fits.gz'
+if file_test(ivarname) eq 0 then begin
+    print, "couldn't find file "+ivarname
     return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
  endif
 
-if file_test(rootpath+'masks_all/'+$
-             string(id, format='(i0)')+'_mask.fits') eq 0 then begin
-    print, "couldn't find file "+$
-           rootpath+string(id, format='(i0)')+'_mask.fits for '+name
+psfname = rootpath+'psf/'+name+'-'+bands[band]+'-bpsf.fits.gz'
+if file_test(psfname) eq 0 then begin
+    print, "couldn't find file "+psfname
     return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
-endif
-im = mrdfits(rootpath+'images/'+name+'.fits', 0)
-ivar0 = mrdfits(rootpath+'ivar/'+name+'.wht.fits',0)
-ivarMask = mrdfits(rootpath+'masks_all/'+string(id, format='(i0)')+'_mask.fits', 0)
-mymask = mrdfits(rootpath+"masks_all/"+string(id, format='(i0)')+'_seg.fits', 0)
+ endif
 
-;temporarily change psf to random psf from list:
-;idpath = string(14292, 149.543219D, 2.152322D, $
-;                format='(i0,".0_",d10.6,"_",d8.6)')
-;print, rootpath+'psf/'+idpath+'.psf.fits.gz'
-;locpsf = mrdfits(rootpath+'psf/'+idpath+'.psf_est_red_halo.fits',0)
-locpsf = mrdfits(rootpath+'psf/PSF_small.fits',0)
+im = mrdfits(imgname, band)
+ivar = mrdfits(ivarname, band*2+1)
+
+
+;there are a few ways to get the psf, from sdss TODO (add this)
+;or from the nsa files
+locpsf = mrdfits(psfname, 0)
+;normalize psf
 locpsf /= total(locpsf)
-mask = mymask
-mask[where(mymask-ivarMask ne mymask)] = 0
-mask[where(mask ne 0)] = 1
 
-;ivarMask[where(ivarMask gt 0)] = 1
-;ivarMask=smooth(ivarMask,50)
-;ivar0[where(ivarMask lt 1.e-15)] = 0
-
-
-;do the image cropping here
-
-;add the variance from the image to variance maps, not done in cosmos
-;but everything is in electrons/seconds, and the exposure time is 2028
-;sec
-; for the ACS images
-ivar = ivar0
-flip = where((ivar0 ne 0) and (mymask ne 0))
-ivar[flip] = 1./(1./ivar0[flip] + im[flip]/2028.0)
-ivar[where(ivarMask eq 1)] = 0.0
-im[where(ivarMask eq 1)] = 0.0
-
-;mask negative flux, these are noise dominated pixels
-nulls=where(ivar lt 0.0,n_nulls)
-print, n_nulls
-if n_nulls gt 0 then $
-  ivar[nulls] *= 0.0
+;make a mask, it's one for the masked out regions
+mask = intarr((size(im,/dimensions))[0], $
+              (size(im, /dimension))[1])
+mask[where(im ne 0)] = 1
+ivar[where(mask eq 0)] = 0
 
 data = {image:im, ivar:ivar, psf:locpsf, mask:mask}
 
 return, data
 
-
 END
 
-
-
-; FUNCTION get_imivarpsf2, id, ra, dec, rootpath
-
-; idpath = string(id, ra, dec, format='(i0,".0_",d10.6,"_",d8.6)')
-
-; ;if file_test(rootpath+'images/'+idpath+'_processed.fits.gz') eq 0 then begin
-; ;    print, "couldn't find file "+rootpath+"images/"+idpath
-; ;    return, {image:0.0, ivar:0.0, psf:0.0}
-; ;endif
-
-; im = mrdfits('RM_COSMOS/0006_skyTest/0006_ring2Image.fits',0)
-; ivar0 = mrdfits('RM_COSMOS/0006_skyTest/0006_ring2Ivar.fits',0)
-; ;im = mrdfits(rootpath+'images/'+idpath+'_processed.fits.gz',0)
-; ;ivarMask = mrdfits(rootpath+'ivar/'+idpath+'.wht.mask.fits',0)
-; ;ivar0 = mrdfits(rootpath+'ivar2/'+idpath+'.wht.fits',0)
-
-
-; locpsf = mrdfits(rootpath+'psf/'+idpath+'.psf.fits.gz',0)
-
-
-; ;ivarMask[where(ivarMask gt 0)] = 1
-; ;ivarMask=smooth(ivarMask,50)
-; ;ivar0[where(ivarMask lt 1.e-15)] = 0
-
-
-; ;do the image cropping here
-
-; ;add the variance from the image to variance maps, not done in cosmos
-; ;but everything is in electrons/seconds, and the exposure time is 2028
-; ;sec
-; ; for the ACS images
-; ivar = ivar0
-; flip = where(ivar0 ne 0)
-; ivar[flip] = 1./(1./ivar0[flip] + im[flip]/2028.0)
-
-; ;mask negative flux, these are noise dominated pixels
-; nulls=where(ivar lt 0.0,n_nulls)
-; if n_nulls gt 0 then $
-;   ivar[nulls] *= 0.0
-
-; data = {image:im, ivar:ivar, psf:locpsf}
-
-; return, data
-
-
-; END
