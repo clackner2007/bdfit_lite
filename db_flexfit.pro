@@ -31,7 +31,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
                 free_sky=free_sky, $
                 free_coords=free_coords, $
                 negative=negative, fixq=fixq, $
-                rescale=rescale, _EXTRA=_EXTRA
+                rescale=rescale, debug=debug, _EXTRA=_EXTRA
                 
 
   xlen = (size(image, /dimensions))[0]
@@ -175,14 +175,15 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
   times = 0
   reset = 0
   seed=systime(/seconds)
-
+  if keyword_set(debug) then queit=0 else queit=1
+  
   while( again ne 0 and times lt 5 ) do begin
     
      start_params = temp
      parinfo[*].value = start_params
      again = 0
      fitstat = 1
-     print, start_params
+     if keyword_set(debug) then print, start_params
      params=mpfit2dfun('pixelfluxpsf', x, y, data.image, $
                        data.ivar, $
                        start_params, parinfo=parinfo, $
@@ -190,7 +191,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
                                   psfImage:data.psf, $
                                   cutoff:1, rescale:rescale}, $
                        perror=errors, covar=covar, weights=data.ivar,$
-                       dof=dof, bestnorm=bn, $ ;/quiet, $
+                       dof=dof, bestnorm=bn, quiet=queit, $
                        xtol=1.0e-10, gtol=1.0e-8, ftol=1.0e-6, $
                        status=fitstat, maxiter=200, npegged=npg) ;, $
                                 ;iterproc='iter_plot', ITERARGS={psf:data.psf}, yfit=fit)
