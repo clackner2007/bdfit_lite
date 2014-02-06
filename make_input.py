@@ -73,14 +73,15 @@ def main():
         DVC_FIX[i,:] = [0,0,1,0,1,0,0,0]
         #you need to pick starting values for the size, and the axis ratio
         #starting values for the surface brightness and the position will
-        #be set in the code
-        DVC_VAL[i,:] = [0.0,10.,4.0,0.7,0.0,0.0,0.0,0.1]
+        #be set in the code, don't set the flux to zero, as the code
+        #just rescales values (so can't rescale 0)
+        DVC_VAL[i,:] = [1.0,10.,4.0,0.7,0.0,0.0,0.0,0.1]
         #for two component fits, always but the 'bulge' (smaller +higher sersic)
         #profile first
         EXPDVC_FIX[i,:] = [0,1,1,1,1,1,1,1,0,0,1,0,1,0,0,0]
         #you'll have to source the fixed values from somewhere, either
         #based on the radius, or based on previously fitting the profiles
-        EXPDVC_VAL[i,:] = [0.0, 78.9, 4.0, 0.75, 0.0, 715.217, 725.011, 2.1801,
+        EXPDVC_VAL[i,:] = [1.0, 78.9, 4.0, 0.75, 0.0, 715.217, 725.011, 2.1801,
                             0.0, 100.0, 1.0, 0.75, 0.0, 0.0, 0.0, 2.2]
                             
          #it might be good to have different input scripts, for example
