@@ -27,7 +27,8 @@
 
 
 
-FUNCTION init_cond, params, fixed_params, image, fracs=fracs, rescale=rescale
+FUNCTION init_cond, params, fixed_params, image, fracs=fracs, rescale=rescale, $
+                    free_coords=free_coords
 
   plist = indgen(n_elements(params)/8)*8
   nprof = n_elements(plist)
@@ -38,11 +39,21 @@ FUNCTION init_cond, params, fixed_params, image, fracs=fracs, rescale=rescale
   x0_ind = 5
   phi_ind = 7
   inits = params
-  
-  xs = getXY_start(image)
-  inits[plist[where((fixed_params[plist+x0_ind] eq 0),/null)]+x0_ind] = xs[0]
-  inits[plist[where((fixed_params[plist+x0_ind+1] eq 0),/null)]+x0_ind+1] = xs[1]
-   
+
+  if ((keyword_set(free_coords) eq 0) and $
+      (where(fixed_params[plist+x0_ind] eq 1, /null) ne !NULL)) then begin
+     setx0 = (where(fixed_params[plist+x0_ind] eq 1))[0]
+     inits[plist+x0_ind] = inits[plist[setx0]+x0_ind]
+     inits[plist + x0_ind+1] = inits[plist[setx0]+x0_ind+1]
+     fixed_params[plist+x0_ind] = 1
+     fixed_params[plist+x0_ind+1] = 1
+  endif else begin
+     
+     xs = getXY_start(image)
+     inits[plist[where((fixed_params[plist+x0_ind] eq 0),/null)]+x0_ind] = xs[0]
+     inits[plist[where((fixed_params[plist+x0_ind+1] eq 0),/null)]+x0_ind+1] = xs[1]
+  endelse
+
   setscaling, image, inits, fixed_params, rescale=rescale, fracs=fracs
 
   return, inits
