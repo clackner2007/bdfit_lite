@@ -8,6 +8,7 @@ PRO setscaling, image, params, fixed_params, rescale=rescale, fracs=fracs
   rescale = keyword_set(rescale)
   tot = max([total(image),10])
   nprof = n_elements(plist)
+  params[plist] = 1.0
   
   totp = dblarr(n_elements(plist))
   for ip=0, n_elements(plist)-1 do begin
