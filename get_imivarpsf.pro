@@ -8,6 +8,13 @@
 ; returns a data object with the image, ivar, psf and a mask (not
 ;really used)
 ; this is specfic to the NSA galaxy image format
+;
+; ARGUMENTS:
+; name = IAU name
+; rootpath = folder where images live
+; atlast id = atlas id from NSA (it's part of filenames)
+; parentid = parent object id from NSA (again for filenames)
+; band=number [0,1,2,3...] of filter/HDU to use.
 ;____________________________________
 
 

@@ -6,9 +6,112 @@
 ;
 ; FIT_SAMPLE.PRO
 ;
-; fits a set of profiles to a set of galaxies  
+; workhorse of fitter, this is what you call to do the fitting
+; it writes a file with the output fit parameters. this file will also
+;include any column from the input file
 ;
+;ARGUMENTS: 
+; filename = input FITS file with list of galaxies you want to fit
+;   this list MUST include the following columns:
+;   1) NAME unique (string name of object) (for NSA objects use IAU
+;name)
+;   2) ATLAS_ID (from NSA catalog)
+;   3) PARENT_ID (from NSA catalog)
+;   These are needed by get_imivarpsf.pro, if you use different
+;data/change the data format, you can change these, but you'll
+;need to edit get_imivarpsf.pro accordingly
+;  4) For the profiles you want to fit (if they aren't default
+;ones, see below), you'll need columns PROFILENAME_FIX and
+;PROFILENAME_VAL. These contain arrays of 8x(# sersic profiles in fit)
+;values and provide the initial conditions (and whether parameters are
+;fixed. See make_input.py for details.
+;
+;start = index in filename of first galaxy to fit (0 -indexed) this
+;way you can run multiple instances of the fitter (over condor/pbs)
+;for the same input galaxy file and then combine the outputs at the end
+;
+;last = index in filename table of 1+last galaxy to fit (length of
+;file if everything)
+;
+;outputdir = directory to put output in. If you want to save the model
+;images, this needs a subdirectory called models
+;
+;imagedir = directory where images are. The images have 3 parts, the
+;image, the inverse variance plane, and the psf. They go in 3 folders,
+;images, ivar, psf
+;
+;OPTIONS:
+;redo = if the input file already includes 'output' columns set this
+;option (not often used)
+;
+;residuals = if you want the code to save images of the fitted models
+;galaxies, set this
 ; 
+;crop = if you want the code to crop the images before fitting, set
+;this, you won't want this often. It calls cropimage_2.pro.
+;
+;profiles = list of profiles you want to fit. If you don't set
+;this, the code defaults to a sersic profile. If you want the code to
+;use the input parameters given in the input file, the names used here
+;have to match what's in the file. profiles should be a
+;structure, where the keys are the profile names and the values are
+;the number of parameters (a multiple of 8), for example,
+;profiles={PROFILE1:16, PROFILE2:16}, would fit 2, 2-component
+;profiles (using parameters from the input file)
+; You can specify default profiles that the code knows and then
+;you don't need to set the input parameters, the defaults are:
+;DVC, EXP, SER, DVCEXP
+;
+;filter='u','g','r',...name of the band you are using (SDSS bands for
+;NSA)
+;
+;freesky = set this if you want the sky to be a free parameter
+;
+;cutoff = set this if you want the models to smoothly go to zero after
+;4 scalelengths (exponential) 8 scalelengths (dvc or sersic). This is
+;the typical SDSS behavior. It will slightly change results, so be
+;consistent
+;
+;debug = set this if you want the code to print extra information
+;
+;OUTPUTS: the program writes a file called
+;outputdir/RAWFITxxx{start}.xxx{last}.fits this file has all the
+;columns from the input file plus the following:
+;XCROP, YCROP  - position of left, bottom corner if cropping is used,
+;                otherwise, 0,0
+;XLEN, YLEN - size of image fit (smaller than original if cropping)
+;For each profile fit there are the following columns
+;FIT_PROFILENAME: final fit parameters for each Sersic component fit
+;there are 8 parameters (this goes for the input to) they are in this
+;order (see sersic.pro for formulas)
+;1) surface brightness at half-light radius
+;2) half-light radius (refers to semi-major axis)
+;3) sersic index
+;4) axis ratio of profile (minor/major)
+;5) boxiness/diskiness by default I set this to zero, so should you
+;6) the x coordinate of the central position of the profiles, by
+;default all components have the same center
+;7) the y coordinate of the central position
+;8) the position angle of the component (different components can be
+;at different angles) in radians (counterclockwise from the x axis)
+;If the profile to be fit has 2 components, FIT_XXX is a 16-element
+;array for each galaxy in the list, 
+;CHISQ_PROFILENAME: reduced chi^2 of fit
+;COVAR_PROFILENAME: covariance matrix of fit parameters (size of FIT^2)
+;PERR_PROFILENAME: errors (1-sigma) in fit parameters (same size as FIT_XX)
+;STAT_PROFILENAME: status of fit, anything other than 0 or 5 is ok
+;DOF_PROFILENAME: degrees of freedom in fit (#pixels - #parameters in fit)
+;SKY_PROFILENAME: sky value (0 if sky isn't free)
+;SKYERR_PROFILENAME: error in sky value (note there are also
+;covariances one could return
+;FLUXRATIO_PROFILENAME: flux ratio of first (usually highest sersic
+;index/smallest component) in a profile to the total flux in the
+;profile (bulge to total ratio)
+;
+;if you turn residuals on, then the program also saves a copy of the
+;best-fit model. It does this to a file outputdir/models/M{NAME}.fits
+;One file for each galaxy fit. So the profiles in there are in the
+;order you fit them (you'll have to pay attention)
 ;____________________________________
 ;-
 

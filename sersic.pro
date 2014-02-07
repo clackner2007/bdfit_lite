@@ -1,3 +1,4 @@
+;+
 ;____________________________________
 ;
 ; Claire Lackner
@@ -16,8 +17,20 @@
 ;  x_0         central position in x
 ;  y_0         central position in y
 ;  phi         rotation angle of major axis
+;
+;
+;the flux at a point x, y is:
+;
+;I * exp {-k(n) * [(r / R)^(1/n) - 1]}
+;r = sqrt{ [ (x-x0)*cos(phi) + (y-y0)*sin(phi) ]^2 + 
+;    [ ( (y-y0)*cos(phi) - (x-x0)*sin(phi) )/q ]^2 }
+;
+;where
+; k(n) = exp[0.6950-0.1789/n]
+;I take the functional form for k(n) from Lima Neto, 1999; but any reasonable one should work.
+;
 ;____________________________________
-
+;-
 
 ;function for computing radius of generalized ellipse
 ; param contains necessary parameters, and xy is the point at which 
