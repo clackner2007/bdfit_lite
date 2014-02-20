@@ -28,7 +28,7 @@ pstring = strtrim(parentid, 2)
 
 
 imgname = rootpath+'images/'+name+'-'+pstring + $
-          '-atlas-'+strtrim(atlasid, 2)+'.fits' 
+          '-atlas-'+strtrim(atlasid, 2)+'.fits.gz' 
 if file_test( imgname ) eq 0 then begin
     print, "couldn't find file "+imgname
     return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
