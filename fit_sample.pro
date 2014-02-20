@@ -124,8 +124,11 @@ print, 'cpus: ',!CPU.TPOOL_NTHREADS
 
 gals = mrdfits(filename,1,range=[start,last-1])
 
-;default is a single sersic profile
-if (n_elements(profiles) eq 0) then profiles={SER:8}
+if (n_elements(profiles) eq 0) then begin
+    message, 'ERROR: No profiles to fit'
+    ;default is a single sersic profile
+    ;profiles={SER:8}
+endif
 ;profiles = hash(profiles, /extract)
 
 ;default filter is 'r'
