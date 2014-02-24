@@ -255,7 +255,7 @@ for i=0L, n_elements(gals)-1L do begin
           tempparams[plist+6] -= ycrop
           ;set the initial scalings and central position
           params = init_cond(tempparams, fixed_params, data.image)
-          if keyword_set(debug) then print, "using giving IC"
+          if keyword_set(debug) then print, "using given IC"
        endif else begin
           case prof of
              'DVC': begin
