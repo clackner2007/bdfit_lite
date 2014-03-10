@@ -76,6 +76,10 @@ END
 ; the extra keyword determines whether or not to use the cutoff radii
 FUNCTION sersic, x, y, p, cutoff=cutoff
 
+; attempt to make initial p[1] circularized effective radius
+; (not along major axis)
+p[1] = p[1] * sqrt(1.0/p[3])
+
 if size(x, /n_dimensions) gt 1 then begin
     density = dblarr( (size( x, /dimensions))[0], $
                       (size( y, /dimensions))[1] )
