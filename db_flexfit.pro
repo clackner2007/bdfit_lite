@@ -88,6 +88,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
                                         ;parameters as well as starting values
 
 
+; require the same center position for all components
   if (not keyword_set(free_coords)) then begin
      temp = x0_ind
      for prof=0, nprof-2 do begin
@@ -99,11 +100,12 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
      endfor
   endif
 
-
+; Make normalization positive unless /negative
   if( not keyword_set(negative) ) then begin
      parinfo[plist].limited = [1,0]
      parinfo[plist].limits = [0.0, 0]
   endif
+; Make radius positive
   parinfo[plist+1].limited = [1,0]
   parinfo[plist+1].limits = [0.0, sqrt(xlen*ylen*1.0)]
   if (rescale eq 1) then begin
@@ -113,6 +115,8 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
                                 ;COMES FIRST!)
   endif
 
+
+     ;Sersic index
      parinfo[plist+2].limited = [1,1]
      parinfo[plist+2].limits = [0.1, 9.0] ; blanton uses 6.0
      reset = where(parinfo[plist+2].fixed ne 0, /null)
@@ -121,6 +125,7 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
         transpose([[parinfo[(plist+2)[reset]].value-1], $
                    [parinfo[(plist+2)[reset]].value+1]])
      
+     ;q_ba axis ratio
      parinfo[plist+3].limited = [1,1]
      parinfo[plist+3].limits = [0.05D,20.0D]
      reset = where(parinfo[plist+3].fixed ne 0, /null)
@@ -129,12 +134,12 @@ PRO db_flexfit, params, image, psf, iv, chisquare, covar, $
         transpose([[parinfo[(plist+3)[reset]].value-1], $
                    [parinfo[(plist+3)[reset]].value+1]])
 
-                                ;this is almost always fixed
+     ;diskiness/boxiness parameter
+     ;this is almost always fixed
      parinfo[plist+4].limited = [1,1]
      parinfo[plist+4].limits = [-1.9D, 1.9D]
      
-     
-                                ;coordinates should be on image
+     ;coordinates should be on image
      parinfo[x0_ind+plist].limited = [1,1]
      parinfo[x0_ind+plist].limits = [0, xlen+0.5]
      parinfo[x0_ind+plist+1].limited = [1,1]
