@@ -14,7 +14,7 @@
 ;
 ;-
 
-FUNCTION get_sdsspsf, run, rerun, cacmol, field, rowc, colc, filter=filter
+FUNCTION get_sdsspsf, run, rerun, camcol, field, rowc, colc, filter=filter
 
   bands = ['u', 'g', 'r', 'i', 'z']
   band = bands[filter]
