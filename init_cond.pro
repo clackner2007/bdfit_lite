@@ -56,7 +56,7 @@ FUNCTION init_cond, params, fixed_params, image, fracs=fracs, rescale=rescale, $
         inits[plist + x0_ind+1] = inits[plist[setx0] + x0_ind+1]
      endif else begin
         xs = getXY_start(image)
-        resetx0 = where((inits[plist+x0_ind] ne 0) and $
+        resetx0 = where((inits[plist+x0_ind] eq 0) and $
                         (fixed_params[plist+x0_ind] eq 0), /null)
         inits[plist[resetx0]+x0_ind] = xs[0]
         inits[plist[resetx0]+x0_ind+1] = xs[1]
