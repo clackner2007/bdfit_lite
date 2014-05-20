@@ -84,7 +84,9 @@ if __name__=='__main__':
                         help='max # of condor jobs running at once')
     args = parser.parse_args()
     
-    numjobs = args.numgal / args.numperJob + 1
+    numjobs, leftover = divmod(args.numgal, args.numperJob)
+    if leftover > 0:
+        numjobs += 1
     
     for i in range(numjobs):
         writeShell(args.infile, i, args.numperJob, args.initgal, args.outdir, args.imagedir)
