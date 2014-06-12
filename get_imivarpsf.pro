@@ -5,66 +5,53 @@
 ;
 ;  get_imivarpsf.pro
 ;
-; returns a data object with the image, ivar, psf and a mask (not
-;really used)
-; this is specfic to the NSA galaxy image format
+; returns a data object with the COSMOS image, ivar, and psf
+; uses and exposure time of 2028.0 seconds to get image variance right
+;  THERE MAY STILL BE ODD FACTORS OF ~4 hanging around from drizzling
 ;
-; ARGUMENTS:
-; name = IAU name
-; rootpath = folder where images live
-; atlast id = atlas id from NSA (it's part of filenames)
-; parentid = parent object id from NSA (again for filenames)
-; band=number [0,1,2,3...] of filter/HDU to use.
+; Assumes the data is arranged as:
+; 
+;  image = rootpath/images/{id}.0_{ra}_{dec}.processed.fits.gz
+;  inverse variance (weights) = rootpath/ivar/{id}.0_{ra}_{dec}.wht.fits
+;  mask = rootpath/mask/{id}.0_{ra}_{dec}.wht.mask.fits
+;  psf = rootpath/psf/{id}.0_{ra}_{dec}.psf.fits.gz
+; 
+;
+;
 ;____________________________________
 
 
-FUNCTION get_imivarpsf, name, rootpath, atlasid, parentid, band=band
+FUNCTION get_imivarpsf, id, ra, dec, rootpath
 
-;default to r-band image
-if n_elements(band) ne 1 then band=2
-bands=['u', 'g', 'r', 'i', 'z', 'nd', 'fd']
+idpath = string(id, ra, dec, format='(i0,".0_",d10.6,"_",d8.6)')
+extra=''
 
-pstring = strtrim(parentid, 2)
+if file_test(rootpath+'images/'+idpath+extra+'_processed.fits.gz') eq 0 then begin
+    print, "couldn't find file "+rootpath+"images/"+idpath+extra+'_processed.fits.gz'
+    return, {image:0.0, ivar:0.0, psf:0.0}
+endif
+im = mrdfits(rootpath+'images/'+idpath+extra+'_processed.fits.gz',0)
+ivarMask = mrdfits(rootpath+'mask/'+idpath+extra+'.wht.mask.fits', 0);.gz',0)
+ivar0 = mrdfits(rootpath+'ivar/'+idpath+extra+'.wht.fits',0);.gz',0)
 
-
-imgname = rootpath+'images/'+name+'-'+pstring + $
-          '-atlas-'+strtrim(atlasid, 2)+'.fits.gz' 
-if file_test( imgname ) eq 0 then begin
-    print, "couldn't find file "+imgname
-    return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
- endif
-
-ivarname = rootpath+'ivar/'+name+'-parent-'+pstring+'.fits.gz'
-if file_test(ivarname) eq 0 then begin
-    print, "couldn't find file "+ivarname
-    return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
- endif
-
-psfname = rootpath+'psf/'+name+'-'+bands[band]+'-bpsf.fits.gz'
-if file_test(psfname) eq 0 then begin
-    print, "couldn't find file "+psfname
-    return, {image:0.0, ivar:0.0, psf:0.0, mask:0.0}
- endif
-
-im = mrdfits(imgname, band)
-ivar = mrdfits(ivarname, band*2+1)
+locpsf = mrdfits(rootpath+'psf/'+idpath+extra+'.psf.fits.gz',0)
+mask = ivarMask
+mask[where(mask ne 0)] /= mask[where(mask ne 0)]
 
 
-;there are a few ways to get the psf, from sdss TODO (add this)
-;or from the nsa files
-locpsf = mrdfits(psfname, 0)
-;normalize psf
-locpsf /= total(locpsf)
+ivar = ivar0
+flip = where(ivar0 ne 0)
+ivar[flip] = 1./(1./ivar0[flip] + im[flip]/2028.0)
 
-;make a mask, it's one for the masked out regions
-mask = intarr((size(im,/dimensions))[0], $
-              (size(im, /dimension))[1])
-mask[where(im ne 0)] = 1
-ivar[where(mask eq 0)] = 0
+;mask negative flux, these are noise dominated pixels
+nulls=where(ivar lt 0.0,n_nulls)
+if n_nulls gt 0 then $
+  ivar[nulls] *= 0.0
 
 data = {image:im, ivar:ivar, psf:locpsf, mask:mask}
 
 return, data
+
 
 END
 

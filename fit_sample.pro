@@ -13,14 +13,13 @@
 ;ARGUMENTS: 
 ; filename = input FITS file with list of galaxies you want to fit
 ;   this list MUST include the following columns:
-;   1) NAME unique (string name of object) (for NSA objects use IAU
-;name)
-;   2) ATLAS_ID (from NSA catalog)
-;   3) PARENT_ID (from NSA catalog)
+;   1) NAME unique nteger for each object
+;   2) RA for each object
+;   3) DEC for each object
 ;   These are needed by get_imivarpsf.pro, if you use different
 ;data/change the data format, you can change these, but you'll
 ;need to edit get_imivarpsf.pro accordingly
-;  4) For the profiles you want to fit (if they aren't default
+;   4) For the profiles you want to fit (if they aren't default
 ;ones, see below), you'll need columns PROFILENAME_FIX and
 ;PROFILENAME_VAL. These contain arrays of 8x(# sersic profiles in fit)
 ;values and provide the initial conditions (and whether parameters are
@@ -48,7 +47,7 @@
 ;galaxies, set this
 ; 
 ;crop = if you want the code to crop the images before fitting, set
-;this, you won't want this often. It calls cropimage_2.pro.
+;this, you won't want this often. It calls cropimage_2.pro. This is a hack
 ;
 ;profiles = list of profiles you want to fit. If you don't set
 ;this, the code defaults to a sersic profile. If you want the code to
@@ -62,8 +61,6 @@
 ;you don't need to set the input parameters, the defaults are:
 ;DVC, EXP, SER, DVCEXP
 ;
-;filter='u','g','r',...name of the band you are using (SDSS bands for
-;NSA)
 ;
 ;freesky = set this if you want the sky to be a free parameter
 ;
@@ -118,7 +115,7 @@
 PRO fit_sample, filename, start, last, outputdir, imagedir, $
                 redo=redo, residuals=residuals, $
                 crop=crop, profiles=profiles, $
-                filter=filter, $
+                ;filter=filter, $
                 freesky=freesky, cutoff=cutoff, debug=debug
 print, 'cpus: ',!CPU.TPOOL_NTHREADS     
 
@@ -132,10 +129,10 @@ endif
 ;profiles = hash(profiles, /extract)
 
 ;default filter is 'r'
-if (n_elements(filter) eq 0) then filter='r'
-filters=['u', 'g', 'r', 'i', 'z']
-if (where(filters eq filter) eq -1) then filter='r'
-band=(where(filters eq filter))[0]
+;; if (n_elements(filter) eq 0) then filter='r'
+;; filters=['u', 'g', 'r', 'i', 'z']
+;; if (where(filters eq filter) eq -1) then filter='r'
+;; band=(where(filters eq filter))[0]
 
 if not keyword_set(redo) then begin
 
@@ -183,9 +180,9 @@ for i=0L, n_elements(gals)-1L do begin
     t1=systime(1)
     
     ;get the image, ivar, and psf
-    data = get_imivarpsf(gals[i].NAME, imagedir, $
-                         gals[i].ATLAS_ID, gals[i].PARENT_ID, $
-                         band=band)
+    data = get_imivarpsf(gals[i].NAME, $
+                         gals[i].RA, gals[i].DEC, $
+                         imagedir)
 
                                 ;figure out the size of the image and
                                 ;do cropping (if wanted, you rarely

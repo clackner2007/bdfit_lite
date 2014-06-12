@@ -30,13 +30,12 @@ def main():
     args = parser.parse_args()
 
 
-    #list of names, atlas-ids, parent-ids
+    #list of ids, ra, and dec, or whatever identifiers you use for the galaxies
     #you would read this in from someplace else
     
-    #nsa galaxies use IAU names
-    names = ['J011058.90+330907.9']
-    atlasids = ['0']
-    parentids = ['92']
+    names = [6789,]
+    ra = [149.915557]
+    dec = [1.949177]
     
     
     #now, if you don't want to use the default profiles with nothing held fixed
@@ -76,12 +75,12 @@ def main():
         #be set in the code, don't set the flux to zero, as the code
         #just rescales values (so can't rescale 0)
         DVC_VAL[i,:] = [1.0,10.,4.0,0.7,0.0,0.0,0.0,0.1]
-        #for two component fits, always but the 'bulge' (smaller +higher sersic)
+        #for two component fits, always put the 'bulge' (smaller +higher sersic)
         #profile first
-        EXPDVC_FIX[i,:] = [0,1,1,1,1,1,1,1,0,0,1,0,1,0,0,0]
+        EXPDVC_FIX[i,:] = [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0]
         #you'll have to source the fixed values from somewhere, either
         #based on the radius, or based on previously fitting the profiles
-        EXPDVC_VAL[i,:] = [1.0, 78.9, 4.0, 0.75, 0.0, 715.217, 725.011, 2.1801,
+        EXPDVC_VAL[i,:] = [1.0, 78.9, 4.0, 0.75, 0.0, 0.0, 0.0, 2.1801,
                             0.0, 100.0, 1.0, 0.75, 0.0, 0.0, 0.0, 2.2]
                             
          #it might be good to have different input scripts, for example
@@ -92,9 +91,9 @@ def main():
 
 
     #put everything into FITS format
-    col1 = pyfits.Column(name='NAME', format='A19', array=names)
-    col2 = pyfits.Column(name='ATLAS_ID', format='J', array=atlasids)
-    col3 = pyfits.Column(name='PARENT_ID', format='J', array=parentids)
+    col1 = pyfits.Column(name='NAME', format='J', array=names)
+    col2 = pyfits.Column(name='RA', format='D', array=ra)
+    col3 = pyfits.Column(name='DEC', format='D', array=dec)
     col4 = pyfits.Column(name='DVC_FIX', format='8D', array=DVC_FIX)
     col5 = pyfits.Column(name='DVC_VAL', format='8D', array=DVC_VAL)
     col6 = pyfits.Column(name='EXPDVC_FIX', format='16D', array=EXPDVC_FIX)
