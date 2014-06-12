@@ -1,5 +1,3 @@
-pbs
-pbs/*
 RAWFIT*
 *.fits
 NOTES
@@ -11,7 +9,6 @@ plots/*.png
 *.pyc
 *~
 *.info
-*.sh
 done
 failed
 *sex
