@@ -1,0 +1,20 @@
+This package contains the barebones version of the bulge+disk galaxy fitter I developed for my thesis (Lackner & Gunn, MNRAS 2012).
+
+Quick start:
+make_input.py which is an example python script about how to make the inputs for the fitter. You'll need the pyfits package and python later than 2.4 to run this. There are lots of comments here, which should explain things. It lets you list out the galaxies and set the initial conditions for each profile. If you want to do what I did in GREAT3, don't bother with the initial conditions, as the code will pick default ones (so, you won't need columns PROFILE_VAL and PROFILE_FIX). Edit this how you see fit. Right now, it just runs to make the input file sample_input.fits that corresponds to the image in testdata.
+
+Before you start, you'll need the galaxy images. I think you can get all the GREAT3 things from the website. You'll want to put things in the follow structure (follow what I did in testdata/) and follow the naming conventions in get_imivarpsf.pro (or change them)
+testdata/images: the actual images
+testdata/ivar: the weights images
+testdata/mask: the detection mask for each object, if you don't have it, I think you can do without, but you'll have to look through the code (get_imivarpsf.pro and fit_sample.pro) and replace it with all ones
+testdata/psf: the point-spread function image, again if you want to use something different, edit get_imivarpsf.pro
+
+The actual fitter is in IDL. At it's heart it's a Levenberg-Marquadt algorithm, MPFIT (not mine). You'll need the library idlutils, which you can get here: http://www.sdss3.org/dr8/software/idlutils.php. You'll also need IDL at least version 7.1, but the code works with IDL 8+ as well.
+The fitting code is called with fit_sample.pro. Again, there are lots of comments.
+
+When you want to test the code (to make sure you have all the dependencies):
+$ python make_input.py
+$ idl
+IDL> fit_sample, 'sample_input.fits', 0, 1, 'testdata/output/', 'testdata/', profiles={DVC:8 SER:8, EXPDVC:16}, /residuals
+
+This will fit 3 profiles to the galaxy in testdata. The DVC and EXPDVC profile have initial conditions given in the sample_input.fits, while the Sersic profile uses the default values. It puts the output in testdata/output/RAWFIT00000.00000.fits. Because the /residuals option is set, it all makes model images and stores them in testdata/output/models/M67890.fits. There should be 3 FITs images in the model file one for each galaxy. You can use ds9 or python+pyfits to look at them.
