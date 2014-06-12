@@ -33,7 +33,7 @@ def main():
     #list of ids, ra, and dec, or whatever identifiers you use for the galaxies
     #you would read this in from someplace else
     
-    names = [6789,]
+    names = [67890,]
     ra = [149.915557]
     dec = [1.949177]
     
@@ -55,7 +55,7 @@ def main():
     #2 --Sersic index
     #3 --axis ratio (minor/major)
     #4 --shape of isophote, default is zero and fixed, 
-    #   but if you specify XXX_FIX you need to fix the 4th parameter
+    #   BUT if you specify XXX_FIX you need to fix the 4th parameter
     #5 --x coordinate of center of profile, be default multiple profiles 
     #    share a center
     #6 --y coordinate of center

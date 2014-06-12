@@ -217,7 +217,8 @@ for i=0L, n_elements(gals)-1L do begin
 
     ;if residuals is set, then save the model images
     if keyword_set(residuals) then begin
-       modName = string('models/M'+output[i].NAME+'.fits')
+       ;modName = string('models/M'+output[i].NAME+'.fits')
+       modName = string(output[i].NAME, format='("models/M", i0, ".fits")')
        modName = outputdir + modName
     endif
 
